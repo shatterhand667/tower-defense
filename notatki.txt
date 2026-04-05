@@ -25,3 +25,7 @@ mini Boss - drzewiec / ent
 
 co 10 fal - trzęsienie ziemi i zmiania mapy. żeby trzeba było na nowo budowac mur. 2 jamy zmieniają miejsce
 
+mechanizm wcześniejszego wysylania fal za kase
+
+budowanie budynkow - budujesz bibliotekę - dostajesz bestariusz
+

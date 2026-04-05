@@ -324,12 +324,13 @@ const Enemies = (() => {
 
   function init() { _list = []; }
 
-  function spawnGoblin(spawnR, spawnC) {
-    _list.push(new Goblin(spawnR, spawnC));
-  }
+  function spawnGoblin(spawnR, spawnC)   { spawnByType('GOBLIN',   spawnR, spawnC); }
+  function spawnAnaconda(spawnR, spawnC) { spawnByType('ANACONDA', spawnR, spawnC); }
 
-  function spawnAnaconda(spawnR, spawnC) {
-    _list.push(new Anaconda(spawnR, spawnC));
+  function spawnByType(typeId, spawnR, spawnC) {
+    const def = Monsters[typeId];
+    if (!def) { console.warn('Nieznany potwór:', typeId); return; }
+    _list.push(def.create(spawnR, spawnC));
   }
 
   function update(dt) {
@@ -350,5 +351,5 @@ const Enemies = (() => {
     return _list.every(e => e.dead || e.reached);
   }
 
-  return { init, list: () => _list, spawnGoblin, spawnAnaconda, update, draw, removeDeadAndReached, allGone };
+  return { init, list: () => _list, spawnGoblin, spawnAnaconda, spawnByType, update, draw, removeDeadAndReached, allGone };
 })();
