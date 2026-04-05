@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tower Defense — Dżungla</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="sidebar">
+
+    <!-- HUD -->
+    <div class="panel" id="hud">
+      <h3>Status</h3>
+      <div class="stat"><span class="label">Złoto</span>  <span class="val" id="gold-val">200</span></div>
+      <div class="stat"><span class="label">Zamek</span>  <span class="val" id="castle-val">20/20</span></div>
+      <div class="stat"><span class="label">Fala</span>   <span class="val" id="wave-val">0</span></div>
+    </div>
+
+    <!-- Tower selection -->
+    <div class="panel">
+      <h3>Wieże</h3>
+
+      <div class="tower-btn" data-type="WALL">
+        <div class="tower-icon wall"></div>
+        <div>
+          <div style="font-size:13px">Mur</div>
+          <div style="font-size:11px;color:#8aaa8a">blokada | HP 80</div>
+        </div>
+        <span class="tower-cost">2g</span>
+      </div>
+
+      <div class="tower-btn" data-type="ARCHER">
+        <div class="tower-icon archer"></div>
+        <div>
+          <div style="font-size:13px">Łucznik</div>
+          <div style="font-size:11px;color:#8aaa8a">dmg 10 | rng 3.5</div>
+        </div>
+        <span class="tower-cost">50g</span>
+      </div>
+
+      <div class="tower-btn" data-type="CANNON">
+        <div class="tower-icon cannon"></div>
+        <div>
+          <div style="font-size:13px">Kanon</div>
+          <div style="font-size:11px;color:#8aaa8a">dmg 25 | splash</div>
+        </div>
+        <span class="tower-cost">75g</span>
+      </div>
+
+      <div class="tower-btn" data-type="SNIPER">
+        <div class="tower-icon sniper"></div>
+        <div>
+          <div style="font-size:13px">Snajper</div>
+          <div style="font-size:11px;color:#8aaa8a">dmg 40 | rng 5.5</div>
+        </div>
+        <span class="tower-cost">100g</span>
+      </div>
+    </div>
+
+    <!-- Selected tower info -->
+    <div class="panel" id="tower-info">
+      <h3 id="ti-name">Wieża</h3>
+      <div class="tower-info-row"><span class="k">HP</span>      <span class="v" id="ti-hp">—</span></div>
+      <div class="tower-info-row"><span class="k">Obrażenia</span><span class="v" id="ti-dmg">—</span></div>
+      <div class="tower-info-row"><span class="k">Zasięg</span>  <span class="v" id="ti-range">—</span></div>
+      <div class="tower-info-row"><span class="k">Szybkostrz.</span><span class="v" id="ti-rate">—</span></div>
+      <button class="action-btn" id="btn-upgrade">Ulepsz</button>
+      <button class="action-btn" id="btn-sell">Sprzedaj</button>
+    </div>
+
+    <!-- Wave control -->
+    <button id="btn-start-wave">▶ Rozpocznij Falę 1</button>
+    <div id="wave-status">Przygotuj obronę!</div>
+
+    <!-- Help -->
+    <div class="panel" id="help">
+      <h3>Sterowanie</h3>
+      LPM na trawie → postaw wieżę<br>
+      LPM na wieży → wybierz / ulepsz<br>
+      PPM → anuluj wybór<br>
+      Żółte strzałki = wejścia goblinów<br>
+      Zielona ścieżka = trasa BFS
+    </div>
+
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/grid.js"></script>
+  <script src="js/pathfinding.js"></script>
+  <script src="js/towers.js"></script>
+  <script src="js/enemies.js"></script>
+  <script src="js/combat.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
