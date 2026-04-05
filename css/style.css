@@ -225,7 +225,30 @@ body {
 #tower-tooltip .tt-innate{ color: #aaddff; margin-top: 5px; font-style: italic; border-top: 1px solid #2a4a2a; padding-top: 4px; }
 #tower-tooltip .tt-fac   { color: #88aa88; margin-top: 4px; font-size: 10px; }
 
-/* ---- FACTION PANEL ---- */
+/* ---- FACTION PANEL (in bottom bar) ---- */
+#factions-panel {
+  border-left: 1px solid #3a5a2a;
+  padding-left: 14px;
+  min-width: 160px;
+  max-height: 120px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #3a5a2a #111;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#factions-header {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #7ab87a;
+  margin-bottom: 2px;
+  flex-shrink: 0;
+}
+
 #factions-list { display: flex; flex-direction: column; gap: 2px; }
 
 .faction-empty {
