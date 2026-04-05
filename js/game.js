@@ -165,6 +165,7 @@ const Game = (() => {
 
       Enemies.update(dt);
       Combat.update(dt, now);
+      Towers.updatePassives(dt);
 
       // Check reached enemies → damage castle
       const { reached } = Enemies.removeDeadAndReached();

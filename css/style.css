@@ -22,11 +22,15 @@ body {
 
 /* ---- SIDEBAR ---- */
 #sidebar {
-  width: 200px;
+  width: 210px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   flex-shrink: 0;
+  max-height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #3a5a2a #1e2d1e;
 }
 
 .panel {
@@ -87,7 +91,19 @@ body {
 .tower-icon.archer  { background: #8B6914; }
 .tower-icon.cannon  { background: #4a4a66; }
 .tower-icon.sniper  { background: #2d5a1b; }
-.tower-icon.golem   { background: #5a6e4a; }
+.tower-icon.golem         { background: #5a6e4a; }
+.tower-icon.wieza-ognia   { background: #cc4400; }
+.tower-icon.wieza-lodu    { background: #44aacc; }
+.tower-icon.wieza-trucizny{ background: #66bb22; }
+.tower-icon.wieza-blysk   { background: #ccaa00; }
+.tower-icon.balistor      { background: #886644; }
+.tower-icon.katapulta     { background: #887755; }
+.tower-icon.mur-kolczasty { background: #556644; border: 1px solid #223311; }
+.tower-icon.mennica       { background: #ccaa00; }
+.tower-icon.kusznik       { background: #997733; }
+.tower-icon.wieza-obs     { background: #aabb88; }
+.tower-icon.wieza-cienia  { background: #554466; }
+.tower-icon.bastion       { background: #667788; }
 
 .tower-info-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
 .tower-info-row .k { color: #8aaa8a; }

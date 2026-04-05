@@ -24,6 +24,10 @@ class Goblin {
     this.walkPhase = 0;
     this.armor = C.GOBLIN.armor;
     this.regen  = C.GOBLIN.regen;
+    this.burning  = { dps: 0, time: 0 };
+    this.slowed   = { mult: 1, time: 0 };
+    this.poisoned = { dps: 0, time: 0 };
+    this.shadowStacks = 0;
   }
 
   _currentTile() {
@@ -86,6 +90,23 @@ class Goblin {
     if (this.regen > 0 && this.hp < this.maxHp)
       this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
 
+    // Status effects
+    if (this.burning.time > 0) {
+      this.hp -= this.burning.dps * dt;
+      this.burning.time -= dt;
+      if (this.hp <= 0) { this.dead = true; return; }
+    }
+    if (this.poisoned.time > 0) {
+      this.hp -= this.poisoned.dps * dt;
+      this.poisoned.time -= dt;
+      if (this.hp <= 0) { this.dead = true; return; }
+    }
+    if (this.slowed.time > 0) {
+      this.slowed.time -= dt;
+    } else {
+      this.slowed.mult = 1;
+    }
+
     // Periodic path recalc + taunt check
     this.recalcTimer += dt;
     if (this.recalcTimer > 0.5) {
@@ -117,7 +138,7 @@ class Goblin {
         }
         this.pathIdx++;
       } else {
-        const move = this.speed * dt;
+        const move = this.speed * this.slowed.mult * dt;
         this.x += (dx / dist) * move;
         this.y += (dy / dist) * move;
       }
@@ -132,6 +153,9 @@ class Goblin {
       if (this.atkTimer >= 1.0 / this.atkRate) {
         this.atkTimer = 0;
         Audio.play('goblinAttack');
+        const thorns = Towers.thornsDmg(this.attackTarget.r, this.attackTarget.c);
+        if (thorns > 0) this.takeDamage(thorns, 'normal');
+        if (this.dead) { return; }
         const destroyed = Towers.takeDamage(this.attackTarget.r, this.attackTarget.c, this.dmgToTower);
         if (destroyed) this.recalcPath();
       }
@@ -140,9 +164,10 @@ class Goblin {
 
   takeDamage(amount, dmgType = 'normal') {
     const armorDef = C.ARMOR[this.armor] || C.ARMOR.NONE;
-    const mult = dmgType === 'pierce' ? armorDef.pierceMult
-               : dmgType === 'splash' ? armorDef.splashMult
-               : 1.0;
+    let mult = dmgType === 'pierce' ? armorDef.pierceMult
+             : dmgType === 'splash' ? armorDef.splashMult
+             : 1.0;
+    if (this.shadowStacks > 0) mult *= (1 + this.shadowStacks * 0.1);
     this.hp -= amount * mult;
     if (this.hp <= 0) this.dead = true;
   }
@@ -278,6 +303,10 @@ class Drzewiec {
     this.walkPhase = 0;
     this.armor = C.DRZEWIEC.armor;
     this.regen  = C.DRZEWIEC.regen;
+    this.burning  = { dps: 0, time: 0 };
+    this.slowed   = { mult: 1, time: 0 };
+    this.poisoned = { dps: 0, time: 0 };
+    this.shadowStacks = 0;
   }
 
   _currentTile() {
@@ -326,6 +355,9 @@ class Drzewiec {
     if (this.dead || this.reached) return;
     if (this.regen > 0 && this.hp < this.maxHp)
       this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
+    if (this.burning.time > 0) { this.hp -= this.burning.dps * dt; this.burning.time -= dt; if (this.hp <= 0) { this.dead = true; return; } }
+    if (this.poisoned.time > 0) { this.hp -= this.poisoned.dps * dt; this.poisoned.time -= dt; if (this.hp <= 0) { this.dead = true; return; } }
+    if (this.slowed.time > 0) { this.slowed.time -= dt; } else { this.slowed.mult = 1; }
     this.walkPhase += dt * 3;
     this.recalcTimer += dt;
     if (this.recalcTimer > 0.5) { this.recalcTimer = 0; if (!this._checkTaunt()) this.recalcPath(); }
@@ -341,7 +373,7 @@ class Drzewiec {
         if (Grid.getCell(wp.r, wp.c) === C.CASTLE) { this.reached = true; return; }
         this.pathIdx++;
       } else {
-        const m = this.speed * dt;
+        const m = this.speed * this.slowed.mult * dt;
         this.x += (dx/dist) * m; this.y += (dy/dist) * m;
       }
     } else if (this.state === 'attacking') {
@@ -351,6 +383,9 @@ class Drzewiec {
       if (this.atkTimer >= 1.0 / this.atkRate) {
         this.atkTimer = 0;
         Audio.play('goblinAttack');
+        const thorns = Towers.thornsDmg(this.attackTarget.r, this.attackTarget.c);
+        if (thorns > 0) this.takeDamage(thorns, 'normal');
+        if (this.dead) return;
         const destroyed = Towers.takeDamage(this.attackTarget.r, this.attackTarget.c, this.dmgToTower);
         if (destroyed) this.recalcPath();
       }
@@ -359,9 +394,10 @@ class Drzewiec {
 
   takeDamage(amount, dmgType = 'normal') {
     const armorDef = C.ARMOR[this.armor] || C.ARMOR.NONE;
-    const mult = dmgType === 'pierce' ? armorDef.pierceMult
-               : dmgType === 'splash' ? armorDef.splashMult
-               : 1.0;
+    let mult = dmgType === 'pierce' ? armorDef.pierceMult
+             : dmgType === 'splash' ? armorDef.splashMult
+             : 1.0;
+    if (this.shadowStacks > 0) mult *= (1 + this.shadowStacks * 0.1);
     this.hp -= amount * mult;
     if (this.hp <= 0) this.dead = true;
   }
@@ -446,6 +482,10 @@ class Anaconda {
     this.posHistory = [{x: this.x, y: this.y}];
     this.armor = C.ANACONDA.armor;
     this.regen  = C.ANACONDA.regen;
+    this.burning  = { dps: 0, time: 0 };
+    this.slowed   = { mult: 1, time: 0 };
+    this.poisoned = { dps: 0, time: 0 };
+    this.shadowStacks = 0;
   }
 
   // Metody ruchu identyczne z Goblin — reużycie przez kopiowanie
@@ -495,6 +535,9 @@ class Anaconda {
     if (this.dead || this.reached) return;
     if (this.regen > 0 && this.hp < this.maxHp)
       this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
+    if (this.burning.time > 0) { this.hp -= this.burning.dps * dt; this.burning.time -= dt; if (this.hp <= 0) { this.dead = true; return; } }
+    if (this.poisoned.time > 0) { this.hp -= this.poisoned.dps * dt; this.poisoned.time -= dt; if (this.hp <= 0) { this.dead = true; return; } }
+    if (this.slowed.time > 0) { this.slowed.time -= dt; } else { this.slowed.mult = 1; }
     this.posHistory.unshift({x: this.x, y: this.y});
     if (this.posHistory.length > 120) this.posHistory.length = 120;
 
@@ -512,7 +555,7 @@ class Anaconda {
         if (Grid.getCell(wp.r, wp.c) === C.CASTLE) { this.reached = true; return; }
         this.pathIdx++;
       } else {
-        const m = this.speed * dt;
+        const m = this.speed * this.slowed.mult * dt;
         this.x += (dx/dist) * m; this.y += (dy/dist) * m;
       }
     } else if (this.state === 'attacking') {
@@ -522,6 +565,9 @@ class Anaconda {
       if (this.atkTimer >= 1.0 / this.atkRate) {
         this.atkTimer = 0;
         Audio.play('goblinAttack');
+        const thorns = Towers.thornsDmg(this.attackTarget.r, this.attackTarget.c);
+        if (thorns > 0) this.takeDamage(thorns, 'normal');
+        if (this.dead) return;
         const destroyed = Towers.takeDamage(this.attackTarget.r, this.attackTarget.c, this.dmgToTower);
         if (destroyed) this.recalcPath();
       }
@@ -530,9 +576,10 @@ class Anaconda {
 
   takeDamage(amount, dmgType = 'normal') {
     const armorDef = C.ARMOR[this.armor] || C.ARMOR.NONE;
-    const mult = dmgType === 'pierce' ? armorDef.pierceMult
-               : dmgType === 'splash' ? armorDef.splashMult
-               : 1.0;
+    let mult = dmgType === 'pierce' ? armorDef.pierceMult
+             : dmgType === 'splash' ? armorDef.splashMult
+             : 1.0;
+    if (this.shadowStacks > 0) mult *= (1 + this.shadowStacks * 0.1);
     this.hp -= amount * mult;
     if (this.hp <= 0) this.dead = true;
   }
@@ -615,6 +662,10 @@ class Ogr {
     this.walkPhase = 0;
     this.armor = C.OGR.armor;
     this.regen  = C.OGR.regen;
+    this.burning  = { dps: 0, time: 0 };
+    this.slowed   = { mult: 1, time: 0 };
+    this.poisoned = { dps: 0, time: 0 };
+    this.shadowStacks = 0;
   }
 
   _currentTile() {
@@ -663,6 +714,9 @@ class Ogr {
     if (this.dead || this.reached) return;
     if (this.regen > 0 && this.hp < this.maxHp)
       this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
+    if (this.burning.time > 0) { this.hp -= this.burning.dps * dt; this.burning.time -= dt; if (this.hp <= 0) { this.dead = true; return; } }
+    if (this.poisoned.time > 0) { this.hp -= this.poisoned.dps * dt; this.poisoned.time -= dt; if (this.hp <= 0) { this.dead = true; return; } }
+    if (this.slowed.time > 0) { this.slowed.time -= dt; } else { this.slowed.mult = 1; }
     this.recalcTimer += dt;
     if (this.recalcTimer > 0.5) { this.recalcTimer = 0; if (!this._checkTaunt()) this.recalcPath(); }
 
@@ -678,7 +732,7 @@ class Ogr {
         if (Grid.getCell(wp.r, wp.c) === C.CASTLE) { this.reached = true; return; }
         this.pathIdx++;
       } else {
-        const m = this.speed * dt;
+        const m = this.speed * this.slowed.mult * dt;
         this.x += (dx/dist) * m; this.y += (dy/dist) * m;
       }
     } else if (this.state === 'attacking') {
@@ -688,6 +742,9 @@ class Ogr {
       if (this.atkTimer >= 1.0 / this.atkRate) {
         this.atkTimer = 0;
         Audio.play('goblinAttack');
+        const thorns = Towers.thornsDmg(this.attackTarget.r, this.attackTarget.c);
+        if (thorns > 0) this.takeDamage(thorns, 'normal');
+        if (this.dead) return;
         const destroyed = Towers.takeDamage(this.attackTarget.r, this.attackTarget.c, this.dmgToTower);
         if (destroyed) this.recalcPath();
       }
@@ -696,9 +753,10 @@ class Ogr {
 
   takeDamage(amount, dmgType = 'normal') {
     const armorDef = C.ARMOR[this.armor] || C.ARMOR.NONE;
-    const mult = dmgType === 'pierce' ? armorDef.pierceMult
-               : dmgType === 'splash' ? armorDef.splashMult
-               : 1.0;
+    let mult = dmgType === 'pierce' ? armorDef.pierceMult
+             : dmgType === 'splash' ? armorDef.splashMult
+             : 1.0;
+    if (this.shadowStacks > 0) mult *= (1 + this.shadowStacks * 0.1);
     this.hp -= amount * mult;
     if (this.hp <= 0) this.dead = true;
   }

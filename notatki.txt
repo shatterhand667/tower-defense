@@ -2,7 +2,6 @@ boss - inna muzyka
 
 wybor rodzaju ataku - pierwszy, najmocniejszy, najsłabszy
 
-losowe miejsce spawnowania wyjść
 
 system wiezy jak w auto battlerach
 
@@ -18,9 +17,6 @@ biblioteka potworow - wygląd, hp , szybkość, armor, typ
 szaman goblin - leczy
 lucznik goblin - strzela w wieze. atakuje zamek z dystansu. masz większy zasieg niż kanon, ale mniejszy niż lucznik
 
-ogry
-
-
 
 
 co 10 fal - trzęsienie ziemi i zmiania mapy. żeby trzeba było na nowo budowac mur. 2 jamy zmieniają miejsce
@@ -35,3 +31,5 @@ przyspieszenie czasu
 rycerz - z pila mechaniczna - scina drzewa
 
 wybrać jednostke - ile ma hp
+
+wlacz / wylacz dzwiek
