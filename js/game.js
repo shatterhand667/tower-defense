@@ -80,8 +80,36 @@ const Game = (() => {
     canvas.addEventListener('mousemove', _onMouseMove);
     canvas.addEventListener('click',     _onClick);
     canvas.addEventListener('contextmenu', _onRightClick);
+    document.getElementById('btn-new-game').addEventListener('click', resetGame);
 
     requestAnimationFrame(_loop);
+  }
+
+  function resetGame() {
+    gold      = C.START_GOLD;
+    castleHP  = C.CASTLE_MAX_HP;
+    wave      = 0;
+    state     = 'prep';
+    selectedTowerType = null;
+    selectedTile      = null;
+    hoverTile         = null;
+    spawnedCount      = 0;
+    totalToSpawn      = 0;
+    spawnTimer        = 0;
+    spawnQueue        = [];
+
+    spawnPositions = _generateSpawns();
+    Grid.init(spawnPositions);
+    Towers.init();
+    Enemies.init();
+    Combat.init();
+
+    cachedPath = _buildCombinedPath();
+    UI.updateSidebar();
+    UI.hideInfo();
+    UI.setWaveStatus('Przygotuj obronę!');
+    UI.setStartBtnEnabled(true);
+    document.getElementById('btn-start-wave').textContent = '▶ Rozpocznij Falę 1';
   }
 
   function _loop(ts) {

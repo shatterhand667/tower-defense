@@ -133,6 +133,20 @@ body {
 #btn-start-wave:hover:not(:disabled) { background: #3a7a3a; }
 #btn-start-wave:disabled { opacity: 0.35; cursor: not-allowed; }
 
+#btn-new-game {
+  width: 100%;
+  padding: 8px;
+  background: #2a2a4a;
+  color: #aaaadd;
+  border: 1px solid #4a4a7a;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  transition: background 0.15s;
+}
+#btn-new-game:hover { background: #3a3a6a; }
+
 /* Wave status */
 #wave-status {
   text-align: center;
