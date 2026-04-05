@@ -87,6 +87,7 @@ body {
 .tower-icon.archer  { background: #8B6914; }
 .tower-icon.cannon  { background: #4a4a66; }
 .tower-icon.sniper  { background: #2d5a1b; }
+.tower-icon.golem   { background: #5a6e4a; }
 
 .tower-info-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
 .tower-info-row .k { color: #8aaa8a; }
@@ -154,6 +155,62 @@ body {
   color: #99bb99;
   padding: 4px;
   min-height: 20px;
+}
+
+/* Faction panel */
+#factions-list { display: flex; flex-direction: column; gap: 2px; }
+
+.faction-empty {
+  font-size: 11px; color: #4a6a4a;
+  text-align: center; padding: 4px 0;
+}
+
+.faction-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+}
+
+.faction-icon { font-size: 12px; flex-shrink: 0; width: 16px; }
+
+.faction-name {
+  flex: 1;
+  font-size: 11px;
+  color: #7a9a7a;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.faction-row.f-active .faction-name { color: #ccddcc; }
+
+.faction-pips { display: flex; gap: 2px; flex-shrink: 0; }
+
+.faction-pip {
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  background: #1e2e1e;
+  border: 1px solid #2a3a2a;
+}
+.faction-pip.filled         { border-color: transparent; }
+.faction-pip.threshold      { border-color: rgba(255,255,255,0.25); }
+
+.faction-count {
+  font-size: 10px;
+  color: #5a7a5a;
+  width: 20px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.faction-row.f-active .faction-count { color: inherit; }
+
+.faction-tier {
+  font-size: 9px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  width: 34px;
+  text-align: right;
 }
 
 /* Help text */

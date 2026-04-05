@@ -50,11 +50,78 @@ const UI = (() => {
     document.getElementById('castle-val').textContent = Game.castleHP + '/' + C.CASTLE_MAX_HP;
     document.getElementById('wave-val').textContent   = Game.wave;
 
-    // Update affordability
     document.querySelectorAll('.tower-btn').forEach(btn => {
       const def = C.TOWERS[btn.dataset.type];
       btn.classList.toggle('unaffordable', Game.gold < def.cost);
     });
+
+    _updateFactions();
+  }
+
+  const TIER_COLORS = ['', '#cd7f32', '#c0c0c0', '#FFD700'];
+  const TIER_NAMES  = ['', 'Bronze',  'Silver',  'Gold'  ];
+
+  function _updateFactions() {
+    const container = document.getElementById('factions-list');
+    const typeIds   = Towers.list().map(t => t.typeId);
+
+    // Count towers per faction
+    const counts = {};
+    for (const id of Object.keys(Factions.DEFS)) counts[id] = 0;
+    for (const typeId of typeIds) {
+      const facs = Factions.TOWER_FACTIONS[typeId];
+      if (!facs) continue;
+      for (const f of facs) counts[f]++;
+    }
+
+    const activeTiers = Factions.getActiveTiers(typeIds);
+
+    // Only show factions with at least 1 tower, sorted by count desc
+    const rows = Object.entries(counts)
+      .filter(([, n]) => n > 0)
+      .sort(([, a], [, b]) => b - a);
+
+    if (rows.length === 0) {
+      container.innerHTML = '<div class="faction-empty">Postaw wieżę aby aktywować synergie</div>';
+      return;
+    }
+
+    container.innerHTML = '';
+
+    for (const [facId, count] of rows) {
+      const def      = Factions.DEFS[facId];
+      const tierData = activeTiers[facId];
+      const tier     = tierData ? tierData.tier : 0;
+      const maxCount = def.thresholds[def.thresholds.length - 1]; // 4
+
+      const row = document.createElement('div');
+      row.className = 'faction-row' + (tier > 0 ? ' f-active' : '');
+
+      // Pips
+      let pipsHtml = '';
+      for (let i = 1; i <= maxCount; i++) {
+        const filled    = i <= count;
+        const atThresh  = def.thresholds.includes(i);
+        const color     = filled ? (tier > 0 ? TIER_COLORS[tier] : '#4a7a4a') : '';
+        const classes   = ['faction-pip', filled ? 'filled' : '', atThresh ? 'threshold' : ''].filter(Boolean).join(' ');
+        const style     = filled ? `background:${color};` : '';
+        pipsHtml += `<span class="${classes}" style="${style}"></span>`;
+      }
+
+      // Tier label (only if active)
+      const tierHtml = tier > 0
+        ? `<span class="faction-tier" style="color:${TIER_COLORS[tier]}">${TIER_NAMES[tier]}</span>`
+        : `<span class="faction-tier"></span>`;
+
+      row.innerHTML =
+        `<span class="faction-icon">${def.icon}</span>` +
+        `<span class="faction-name">${def.name}</span>` +
+        `<div class="faction-pips">${pipsHtml}</div>` +
+        `<span class="faction-count" style="${tier > 0 ? 'color:' + TIER_COLORS[tier] : ''}">${count}/${maxCount}</span>` +
+        tierHtml;
+
+      container.appendChild(row);
+    }
   }
 
   function showTowerInfo(tile) {
