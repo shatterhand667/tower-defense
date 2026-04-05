@@ -8,7 +8,7 @@ const C = {
   SPAWN:  2,
   CASTLE: 3,
 
-  SPAWN_ROWS:  [3, 7, 10, 13, 17],
+  SPAWN_COUNT:  5,
   CASTLE_ROWS: [7, 8, 9, 10, 11, 12, 13],
 
   START_GOLD:    200,

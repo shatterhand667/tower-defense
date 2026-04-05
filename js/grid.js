@@ -2,7 +2,7 @@ const Grid = (() => {
   let cells = [];
   let grassV = []; // pre-computed random variation per tile
 
-  function init() {
+  function init(spawnPositions) {
     cells = [];
     grassV = [];
     for (let r = 0; r < C.ROWS; r++) {
@@ -11,19 +11,15 @@ const Grid = (() => {
       for (let c = 0; c < C.COLS; c++) grassV[r][c] = Math.random();
     }
 
-    // Top / bottom border
-    for (let c = 0; c < C.COLS; c++) {
-      cells[0][c] = C.TREE;
-      cells[C.ROWS - 1][c] = C.TREE;
-    }
+    // All border tiles → TREE
+    for (let c = 0; c < C.COLS; c++) { cells[0][c] = C.TREE; cells[C.ROWS-1][c] = C.TREE; }
+    for (let r = 0; r < C.ROWS; r++) { cells[r][0] = C.TREE; cells[r][C.COLS-1] = C.TREE; }
 
-    // Left edge
-    for (let r = 0; r < C.ROWS; r++) cells[r][0] = C.TREE;
-    C.SPAWN_ROWS.forEach(r => { if (r > 0 && r < C.ROWS - 1) cells[r][0] = C.SPAWN; });
+    // Castle (right edge)
+    C.CASTLE_ROWS.forEach(r => { cells[r][C.COLS-1] = C.CASTLE; });
 
-    // Right edge
-    for (let r = 0; r < C.ROWS; r++) cells[r][C.COLS - 1] = C.TREE;
-    C.CASTLE_ROWS.forEach(r => { if (r > 0 && r < C.ROWS - 1) cells[r][C.COLS - 1] = C.CASTLE; });
+    // Spawn jamy (losowe, przekazane z zewnątrz)
+    spawnPositions.forEach(pos => { cells[pos.r][pos.c] = C.SPAWN; });
   }
 
   function getCell(r, c) {
@@ -90,17 +86,28 @@ const Grid = (() => {
     else if (type === C.SPAWN) {
       ctx.fillStyle = '#3a7d44';
       ctx.fillRect(x, y, t, t);
-      ctx.fillStyle = 'rgba(255,240,80,0.65)';
+      // Arrow pointing inward depending on which edge this spawn is on
+      const cx2 = x + t/2, cy2 = y + t/2;
+      let angle = 0; // default: right
+      if (c === 0)           angle = 0;           // left edge → point right
+      if (c === C.COLS - 1)  angle = Math.PI;     // right edge → point left
+      if (r === 0)           angle = Math.PI/2;   // top edge → point down
+      if (r === C.ROWS - 1)  angle = -Math.PI/2;  // bottom edge → point up
+      ctx.save();
+      ctx.translate(cx2, cy2);
+      ctx.rotate(angle);
+      ctx.fillStyle = 'rgba(255,240,80,0.75)';
       ctx.beginPath();
-      ctx.moveTo(x + 3,      y + t/2 - 5);
-      ctx.lineTo(x + t - 8,  y + t/2 - 5);
-      ctx.lineTo(x + t - 8,  y + t/2 - 9);
-      ctx.lineTo(x + t - 2,  y + t/2);
-      ctx.lineTo(x + t - 8,  y + t/2 + 9);
-      ctx.lineTo(x + t - 8,  y + t/2 + 5);
-      ctx.lineTo(x + 3,      y + t/2 + 5);
+      ctx.moveTo(-9,  -5);
+      ctx.lineTo( 4,  -5);
+      ctx.lineTo( 4,  -9);
+      ctx.lineTo(11,   0);
+      ctx.lineTo( 4,   9);
+      ctx.lineTo( 4,   5);
+      ctx.lineTo(-9,   5);
       ctx.closePath();
       ctx.fill();
+      ctx.restore();
     }
 
     // --- CASTLE ---

@@ -1,9 +1,9 @@
 class Goblin {
-  constructor(spawnRow) {
-    this.r = spawnRow;
-    this.c = 0;
-    this.x = C.T / 2;
-    this.y = spawnRow * C.T + C.T / 2;
+  constructor(spawnR, spawnC) {
+    this.r = spawnR;
+    this.c = spawnC;
+    this.x = spawnC * C.T + C.T / 2;
+    this.y = spawnR * C.T + C.T / 2;
     this.hp = C.GOBLIN.hp;
     this.maxHp = C.GOBLIN.hp;
     this.speed = C.GOBLIN.speed * C.T; // px/s
@@ -167,8 +167,8 @@ const Enemies = (() => {
 
   function init() { _list = []; }
 
-  function spawnGoblin(spawnRow) {
-    _list.push(new Goblin(spawnRow));
+  function spawnGoblin(spawnR, spawnC) {
+    _list.push(new Goblin(spawnR, spawnC));
   }
 
   function update(dt) {

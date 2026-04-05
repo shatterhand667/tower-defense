@@ -13,10 +13,11 @@ const Game = (() => {
   let lastTime          = 0;
 
   // Wave spawning
-  let spawnQueue    = []; // array of spawnRow indices
-  let spawnTimer    = 0;
-  let spawnedCount  = 0;
-  let totalToSpawn  = 0;
+  let spawnPositions = []; // array of {r,c} — generated each new game
+  let spawnQueue     = []; // array of {r,c} used per wave
+  let spawnTimer     = 0;
+  let spawnedCount   = 0;
+  let totalToSpawn   = 0;
 
   // --- Expose mutable state as getters/setters so modules can reference Game.gold etc. ---
   const pub = {
@@ -30,11 +31,42 @@ const Game = (() => {
     set selectedTile(v)     { selectedTile = v; },
   };
 
+  function _generateSpawns() {
+    const candidates = [];
+    // Left edge
+    for (let r = 1; r < C.ROWS - 1; r++) candidates.push({r, c: 0});
+    // Right edge (nie castle)
+    for (let r = 1; r < C.ROWS - 1; r++) {
+      if (!C.CASTLE_ROWS.includes(r)) candidates.push({r, c: C.COLS - 1});
+    }
+    // Top & bottom edge (bez narożników)
+    for (let c = 1; c < C.COLS - 1; c++) {
+      candidates.push({r: 0, c});
+      candidates.push({r: C.ROWS - 1, c});
+    }
+
+    // Odfiltruj zbyt blisko zamku (dystans Manhattan < 2)
+    const valid = candidates.filter(pos =>
+      C.CASTLE_ROWS.every(cr =>
+        Math.abs(pos.r - cr) + Math.abs(pos.c - (C.COLS - 1)) >= 2
+      )
+    );
+
+    // Shuffle
+    for (let i = valid.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [valid[i], valid[j]] = [valid[j], valid[i]];
+    }
+
+    return valid.slice(0, C.SPAWN_COUNT);
+  }
+
   function init() {
     canvas.width  = C.COLS * C.T;
     canvas.height = C.ROWS * C.T;
 
-    Grid.init();
+    spawnPositions = _generateSpawns();
+    Grid.init(spawnPositions);
     Towers.init();
     Enemies.init();
     Combat.init();
@@ -72,8 +104,8 @@ const Game = (() => {
         spawnTimer -= dt;
         if (spawnTimer <= 0) {
           spawnTimer = C.WAVE_SPAWN_INTERVAL;
-          const row = spawnQueue[spawnedCount % spawnQueue.length];
-          Enemies.spawnGoblin(row);
+          const pos = spawnQueue[spawnedCount % spawnQueue.length];
+          Enemies.spawnGoblin(pos.r, pos.c);
           spawnedCount++;
         }
       }
@@ -173,7 +205,7 @@ const Game = (() => {
     spawnedCount = 0;
     totalToSpawn = C.WAVE_SIZE + (wave - 1) * 3;
     spawnTimer   = 0;
-    spawnQueue   = [...C.SPAWN_ROWS];
+    spawnQueue   = [...spawnPositions];
     UI.setStartBtnEnabled(false);
     Audio.play('waveStart');
     UI.setWaveStatus('Fala ' + wave + ' — Idą gobliny!');
@@ -181,11 +213,10 @@ const Game = (() => {
   }
 
   function _buildCombinedPath() {
-    // Union of all paths from every spawn row
     const seen = new Set();
     const combined = [];
-    for (const r of C.SPAWN_ROWS) {
-      const p = Pathfinding.findPath(r, 0, Towers.grid());
+    for (const pos of spawnPositions) {
+      const p = Pathfinding.findPath(pos.r, pos.c, Towers.grid());
       if (!p) continue;
       for (const tile of p) {
         const key = tile.r + ',' + tile.c;
