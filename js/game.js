@@ -11,6 +11,8 @@ const Game = (() => {
   let hoverTile         = null;
   let cachedPath        = null;
   let lastTime          = 0;
+  let _isDragging       = false;
+  let _lastDragTile     = null;
 
   // Wave spawning
   let spawnPositions  = [];
@@ -87,8 +89,11 @@ const Game = (() => {
     UI.updateSidebar();
     UI.setWaveStatus('Przygotuj obronę!');
 
-    canvas.addEventListener('mousemove', _onMouseMove);
-    canvas.addEventListener('click',     _onClick);
+    canvas.addEventListener('mousemove',  _onMouseMove);
+    canvas.addEventListener('mousedown',  _onMouseDown);
+    canvas.addEventListener('mouseup',    _onMouseUp);
+    canvas.addEventListener('mouseleave', () => { _isDragging = false; _lastDragTile = null; });
+    canvas.addEventListener('click',      _onClick);
     canvas.addEventListener('contextmenu', _onRightClick);
     document.getElementById('btn-new-game').addEventListener('click', resetGame);
 
@@ -336,6 +341,56 @@ const Game = (() => {
   function _onMouseMove(e) {
     const t = _tileAt(e);
     hoverTile = t;
+
+    if (_isDragging && selectedTowerType) {
+      if (_lastDragTile && _lastDragTile.r === t.r && _lastDragTile.c === t.c) return;
+      _lastDragTile = t;
+      _tryPlace(t, true); // keepMode — nie czyść trybu podczas draga
+    }
+  }
+
+  function _onMouseDown(e) {
+    if (e.button !== 0) return;
+    if (!selectedTowerType) return;
+    _isDragging = true;
+    _lastDragTile = null;
+  }
+
+  function _onMouseUp(e) {
+    // Jeśli był prawdziwy drag (ruch po kafelkach) — czyść tryb kupna
+    if (_isDragging && _lastDragTile !== null && selectedTowerType) {
+      selectedTowerType = null;
+      UI.highlightBtn(null);
+    }
+    _isDragging = false;
+    _lastDragTile = null;
+  }
+
+  // keepMode=true podczas draga (nie czyść trybu po każdym postawieniu)
+  function _tryPlace(t, keepMode = false) {
+    if (state === 'gameover' || state === 'won') return;
+    const tower = Towers.grid()[t.r]?.[t.c];
+    if (Grid.getCell(t.r, t.c) !== C.GRASS) return;
+    const def = C.TOWERS[selectedTowerType];
+    const wallHere = tower && tower.typeId === 'WALL';
+    if (tower && !wallHere) return;
+    const wallRefund = wallHere ? Math.floor(tower.totalCost * (Game.wave === 0 ? 1.0 : 0.5)) : 0;
+    const netCost = def.cost - wallRefund;
+    if (gold < netCost) return;
+    if (wallHere) Towers.sell(t.r, t.c);
+    const placed = Towers.place(t.r, t.c, selectedTowerType);
+    if (placed) {
+      gold = gold + wallRefund - def.cost;
+      Audio.play('place');
+      UI.updateSidebar();
+      cachedPath = _buildCombinedPath();
+      selectedTile = null;
+      UI.hideInfo();
+      if (!keepMode) {
+        selectedTowerType = null;
+        UI.highlightBtn(null);
+      }
+    }
   }
 
   function _onClick(e) {
@@ -343,47 +398,22 @@ const Game = (() => {
     const t = _tileAt(e);
     const tower = Towers.grid()[t.r]?.[t.c];
 
-    // Placing a tower type selected
-    if (selectedTowerType && Grid.getCell(t.r, t.c) === C.GRASS) {
-      const def = C.TOWERS[selectedTowerType];
-
-      // If there's a wall here and we're placing a non-wall tower → replace wall
-      const wallHere = tower && tower.typeId === 'WALL';
-      if (tower && !wallHere) {
-        // W trybie kupna — ignoruj kliknięcie na istniejącą wieżę
-        return;
-      }
-
-      const totalCost = def.cost + (wallHere ? 0 : 0); // wall refunded below
-      const wallRefund = wallHere ? Math.floor(tower.totalCost * (Game.wave === 0 ? 1.0 : 0.5)) : 0;
-      const netCost = def.cost - wallRefund;
-
-      if (gold < netCost) { UI.setWaveStatus('Za mało złota!'); return; }
-
-      if (wallHere) Towers.sell(t.r, t.c); // remove wall, no gold change yet
-
-      const placed = Towers.place(t.r, t.c, selectedTowerType);
-      if (placed) {
-        gold = gold + wallRefund - def.cost;
-        selectedTowerType = null;
-        UI.highlightBtn(null);
-        Audio.play('place');
-        UI.updateSidebar();
-        cachedPath = _buildCombinedPath();
-        selectedTile = null;
-        UI.hideInfo();
-      }
+    if (selectedTowerType) {
+      const tower2 = Towers.grid()[t.r]?.[t.c];
+      const wallHere = tower2 && tower2.typeId === 'WALL';
+      if (tower2 && !wallHere) return; // kliknięcie na istniejącą wieżę w trybie kupna — ignoruj
+      _tryPlace(t);
       return;
     }
 
     if (tower) {
-      // Select placed tower
+      // Wybierz postawioną wieżę
       selectedTowerType = null;
       UI.showTowerInfo(t);
       return;
     }
 
-    // Click on empty tile while no tower type selected: deselect
+    // Kliknięcie na pusty kafelek bez trybu kupna — odznacz
     selectedTile = null;
     selectedTowerType = null;
     UI.hideInfo();
