@@ -17,6 +17,14 @@ const Monsters = {
     create:      (r, c) => new Goblin(r, c),
   },
 
+  DRZEWIEC: {
+    id:          'DRZEWIEC',
+    name:        'Drzewiec',
+    description: 'Ożywione drzewo dżungli. Silniejszy od goblina, wolniejszy od anakondy.',
+    tier:        2,
+    create:      (r, c) => new Drzewiec(r, c),
+  },
+
   ANACONDA: {
     id:          'ANACONDA',
     name:        'Anakonda Cesarska',

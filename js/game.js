@@ -356,13 +356,27 @@ const Game = (() => {
     document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('selected'));
   }
 
+  function _randomSpawn() {
+    return spawnPositions[Math.floor(Math.random() * spawnPositions.length)];
+  }
+
   function addKill(enemy) {
     if (enemy.type !== 'goblin') return;
     killCount++;
-    if (!anacondaSpawned && killCount >= C.ANACONDA.killsToSpawn && state === 'wave') {
+    if (state !== 'wave') return;
+
+    // Drzewiec co 7 goblinów
+    if (killCount % C.DRZEWIEC.killsToSpawn === 0) {
+      const pos = _randomSpawn();
+      Enemies.spawnByType('DRZEWIEC', pos.r, pos.c);
+      UI.setWaveStatus('Drzewiec wyłazi z dżungli!');
+    }
+
+    // Anakonda raz na falę po 10 goblinach
+    if (!anacondaSpawned && killCount >= C.ANACONDA.killsToSpawn) {
       anacondaSpawned = true;
-      const pos = spawnPositions[Math.floor(Math.random() * spawnPositions.length)];
-      Enemies.spawnAnaconda(pos.r, pos.c);
+      const pos = _randomSpawn();
+      Enemies.spawnByType('ANACONDA', pos.r, pos.c);
       bossAnnouncement = 3.5;
       UI.setWaveStatus('⚠ Anakonda Cesarska nadchodzi!');
     }

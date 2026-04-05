@@ -63,6 +63,12 @@ const C = {
     dmgToCastle: 1, dmgToTower: 20, atkRate: 1.0,
   },
 
+  DRZEWIEC: {
+    hp: 120, speed: 1.1, reward: 25,
+    dmgToCastle: 2, dmgToTower: 30, atkRate: 0.9,
+    killsToSpawn: 7,   // co ile zabitych goblinów się pojawia
+  },
+
   ANACONDA: {
     hp: 280, speed: 0.85, reward: 60,
     dmgToCastle: 3, dmgToTower: 45, atkRate: 0.7,
