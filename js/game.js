@@ -112,6 +112,15 @@ const Game = (() => {
     canvas.addEventListener('contextmenu', _onRightClick);
     document.getElementById('btn-new-game').addEventListener('click', resetGame);
 
+    document.addEventListener('mousedown', (e) => {
+      if (!selectedTile) return;
+      const panel = document.getElementById('tower-info');
+      if (!panel.contains(e.target) && !canvas.contains(e.target)) {
+        selectedTile = null;
+        UI.hideInfo();
+      }
+    });
+
     requestAnimationFrame(_loop);
   }
 
@@ -382,6 +391,8 @@ const Game = (() => {
 
     if (_isDragging && selectedTowerType) {
       if (_lastDragTile && _lastDragTile.r === t.r && _lastDragTile.c === t.c) return;
+      const occupant = Towers.grid()[t.r]?.[t.c];
+      if (occupant && occupant.typeId !== 'WALL') return; // podczas draga pomijaj wieże (nie mury)
       _lastDragTile = t;
       _tryPlace(t, true);
     } else if (_isDragging && _selStart) {
@@ -401,6 +412,10 @@ const Game = (() => {
   }
 
   function _onMouseUp(e) {
+    if (_isDragging && _lastDragTile !== null) {
+      // Był drag budowania — zablokuj click który zaraz odpali
+      _suppressNextClick = true;
+    }
     if (_isDragging && _selRect) {
       // Zakończenie draga zaznaczania — zbierz wieże w prostokącie
       const tiles = [];
@@ -457,8 +472,8 @@ const Game = (() => {
     if (selectedTowerType) {
       const tower2 = Towers.grid()[t.r]?.[t.c];
       const wallHere = tower2 && tower2.typeId === 'WALL';
-      if (tower2) {
-        // Kliknięcie na istniejącą wieżę/mur w trybie kupna — pokaż sell/upgrade
+      if (tower2 && !wallHere) {
+        // Kliknięcie na istniejącą wieżę (nie mur) w trybie kupna — pokaż sell/upgrade
         selectedTowerType = null;
         UI.highlightBtn(null);
         UI.showTowerInfo(t);

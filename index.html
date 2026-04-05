@@ -12,25 +12,17 @@
   <div id="game-area">
     <canvas id="gameCanvas"></canvas>
 
-    <div id="bottom-bar">
+    <!-- wave-status hidden, used by JS only -->
+    <div id="wave-status" style="display:none"></div>
 
-      <!-- Lewa kolumna: statsy + przyciski -->
-      <div id="hud-and-controls">
-        <div id="hud">
-          <div class="stat"><span class="label">Złoto</span>  <span class="val" id="gold-val">200</span></div>
-          <div class="stat"><span class="label">Zamek</span>  <span class="val" id="castle-val">20/20</span></div>
-          <div class="stat"><span class="label">Fala</span>   <span class="val" id="wave-val">0</span></div>
-        </div>
-        <div id="wave-controls">
-          <button id="btn-start-wave">▶ Rozpocznij Falę 1</button>
-          <button id="btn-new-game">↺ Nowa gra</button>
-        </div>
+    <div id="bottom-bar">
+      <!-- Przyciski fali -->
+      <div id="wave-controls">
+        <button id="btn-start-wave">▶ Rozpocznij Falę 1</button>
+        <button id="btn-new-game">↺ Nowa gra</button>
       </div>
 
-      <!-- wave-status hidden, used by JS only -->
-      <div id="wave-status" style="display:none"></div>
-
-      <!-- Stronnictwa: reszta szerokości, 2 kolumny -->
+      <!-- Stronnictwa -->
       <div id="factions-panel">
         <div id="factions-header">Stronnictwa</div>
         <div id="factions-list"></div>
@@ -49,8 +41,17 @@
     </div>
   </div>
 
-  <!-- Prawa kolumna: wieże + stronnictwa -->
+  <!-- Prawa kolumna: status + wieże -->
   <div id="sidebar">
+
+    <!-- Status -->
+    <div class="panel" id="status-panel">
+      <div id="hud">
+        <div class="stat"><span class="label">Złoto</span>  <span class="val" id="gold-val">200</span></div>
+        <div class="stat"><span class="label">Zamek</span>  <span class="val" id="castle-val">20/20</span></div>
+        <div class="stat"><span class="label">Fala</span>   <span class="val" id="wave-val">0</span></div>
+      </div>
+    </div>
 
     <!-- Tower selection -->
     <div class="panel">

@@ -38,20 +38,11 @@ body {
   gap: 0;
 }
 
-/* Left column: stats + buttons stacked */
-#hud-and-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
-  padding-right: 14px;
-  border-right: 1px solid #3a5a2a;
-}
-
 #hud {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  margin-bottom: 8px;
 }
 
 .stat { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
@@ -65,6 +56,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  flex-shrink: 0;
+  padding-right: 14px;
+  border-right: 1px solid #3a5a2a;
 }
 
 #btn-start-wave {
@@ -277,7 +271,6 @@ body {
 
 /* ---- FACTION PANEL (in bottom bar) ---- */
 #factions-panel {
-  padding-left: 14px;
   flex: 1;
   min-width: 0;
   display: flex;
