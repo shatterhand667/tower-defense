@@ -67,6 +67,7 @@ const Game = (() => {
 
     spawnPositions = _generateSpawns();
     Grid.init(spawnPositions);
+    MapObjects.init(spawnPositions);
     Towers.init();
     Enemies.init();
     Combat.init();
@@ -100,6 +101,7 @@ const Game = (() => {
 
     spawnPositions = _generateSpawns();
     Grid.init(spawnPositions);
+    MapObjects.init(spawnPositions);
     Towers.init();
     Enemies.init();
     Combat.init();

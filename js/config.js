@@ -3,12 +3,14 @@ const C = {
   ROWS: 20,
   T: 32,
 
-  GRASS:  0,
-  TREE:   1,
-  SPAWN:  2,
-  CASTLE: 3,
+  GRASS:   0,
+  TREE:    1,
+  SPAWN:   2,
+  CASTLE:  3,
+  TERRAIN: 4,  // mapa-obiekty (drzewa, głazy, itp.)
 
-  SPAWN_COUNT:  5,
+  SPAWN_COUNT:     5,
+  MAP_TREE_COUNT: 14,  // drzew losowanych na planszy
   CASTLE_ROWS: [7, 8, 9, 10, 11, 12, 13],
 
   START_GOLD:    200,

@@ -29,9 +29,13 @@ const Grid = (() => {
 
   function isWalkable(r, c, towerGrid) {
     const type = getCell(r, c);
-    if (type === -1 || type === C.TREE) return false;
+    if (type === -1 || type === C.TREE || type === C.TERRAIN) return false;
     if (towerGrid && towerGrid[r] && towerGrid[r][c]) return false;
     return true;
+  }
+
+  function setCell(r, c, type) {
+    if (r >= 0 && r < C.ROWS && c >= 0 && c < C.COLS) cells[r][c] = type;
   }
 
   function draw(ctx, path, hover, selType, towerGrid) {
@@ -108,6 +112,23 @@ const Grid = (() => {
       ctx.closePath();
       ctx.fill();
       ctx.restore();
+    }
+
+    // --- TERRAIN (mapa-obiekty: drzewa, itp.) ---
+    else if (type === C.TERRAIN) {
+      // Trawa pod spodem
+      ctx.fillStyle = v > 0.5 ? '#3a7d44' : '#357a3f';
+      ctx.fillRect(x, y, t, t);
+      // Pień
+      ctx.fillStyle = '#5a3a1a';
+      ctx.fillRect(x + t/2 - 2, y + t/2 + 2, 4, t/2 - 4);
+      // Korona — jaśniejsza niż obwódka lasu, trochę mniejsza
+      ctx.fillStyle = '#336633';
+      ctx.beginPath(); ctx.arc(x + t/2, y + t/2 - 2, 9, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#4a8c4a';
+      ctx.beginPath(); ctx.arc(x + t/2 - 3, y + t/2 - 4, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#5aa05a';
+      ctx.beginPath(); ctx.arc(x + t/2 + 3, y + t/2 - 5, 5, 0, Math.PI * 2); ctx.fill();
     }
 
     // --- CASTLE ---
