@@ -1,9 +1,27 @@
 boss - inna muzyka
 
-wybor rodzaju atau - pierwszy, najmocniejszy, najsłabszy
+wybor rodzaju ataku - pierwszy, najmocniejszy, najsłabszy
 
 losowe miejsce spawnowania wyjść
 
 system wiezy jak w auto battlerach
 
 przeciąganie muru
+przyciski nowa gra zamiast odswiezania strony
+
+potwoty maja atakować tylko mur, do którego dosiegaja. nie losowy na mapie
+
+drzewa w losowym miejscu - kilka kep
+
+biblioteka potworow - wygląd, hp , szybkość, armor, typ
+
+szaman goblin - leczy
+lucznik goblin - strzela w wieze. atakuje zamek z dystansu. masz większy zasieg niż kanon, ale mniejszy niż lucznik
+
+ogry
+
+mini Boss - drzewiec / ent
+
+
+co 10 fal - trzęsienie ziemi i zmiania mapy. żeby trzeba było na nowo budowac mur. 2 jamy zmieniają miejsce
+

@@ -13,11 +13,16 @@ const Game = (() => {
   let lastTime          = 0;
 
   // Wave spawning
-  let spawnPositions = []; // array of {r,c} — generated each new game
-  let spawnQueue     = []; // array of {r,c} used per wave
+  let spawnPositions = [];
+  let spawnQueue     = [];
   let spawnTimer     = 0;
   let spawnedCount   = 0;
   let totalToSpawn   = 0;
+
+  // Boss
+  let killCount        = 0;
+  let anacondaSpawned  = false;
+  let bossAnnouncement = 0; // timer (s) dla baneru
 
   // --- Expose mutable state as getters/setters so modules can reference Game.gold etc. ---
   const pub = {
@@ -98,6 +103,9 @@ const Game = (() => {
     totalToSpawn      = 0;
     spawnTimer        = 0;
     spawnQueue        = [];
+    killCount         = 0;
+    anacondaSpawned   = false;
+    bossAnnouncement  = 0;
 
     spawnPositions = _generateSpawns();
     Grid.init(spawnPositions);
@@ -127,6 +135,7 @@ const Game = (() => {
     if (state === 'gameover' || state === 'won') return;
 
     UI.update(dt);
+    if (bossAnnouncement > 0) bossAnnouncement -= dt;
 
     if (state === 'wave') {
       // Spawn goblins from queue
@@ -212,8 +221,25 @@ const Game = (() => {
     Combat.draw(ctx);
     UI.drawFloats(ctx);
 
+    if (bossAnnouncement > 0) _drawBossAnnouncement();
     if (state === 'gameover') _drawOverlay('GAME OVER', '#cc2222');
     if (state === 'won')      _drawOverlay('WYGRANA!',  '#22cc44');
+  }
+
+  function _drawBossAnnouncement() {
+    const alpha = Math.min(1, bossAnnouncement) * Math.min(1, (bossAnnouncement / 3.5) * 4);
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(0, canvas.height/2 - 44, canvas.width, 88);
+    ctx.fillStyle = '#ff4444';
+    ctx.font = 'bold 30px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('⚠  MINI BOSS  ⚠', canvas.width/2, canvas.height/2 - 8);
+    ctx.fillStyle = '#ffcc44';
+    ctx.font = 'bold 20px monospace';
+    ctx.fillText('Anakonda Cesarska', canvas.width/2, canvas.height/2 + 22);
+    ctx.restore();
   }
 
   function _drawOverlay(text, color) {
@@ -236,6 +262,9 @@ const Game = (() => {
     totalToSpawn = C.WAVE_SIZE + (wave - 1) * 3;
     spawnTimer   = 0;
     spawnQueue   = [...spawnPositions];
+    killCount        = 0;
+    anacondaSpawned  = false;
+    bossAnnouncement = 0;
     UI.setStartBtnEnabled(false);
     Audio.play('waveStart');
     UI.setWaveStatus('Fala ' + wave + ' — Idą gobliny!');
@@ -327,7 +356,19 @@ const Game = (() => {
     document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('selected'));
   }
 
-  return Object.assign(pub, { init, startWave });
+  function addKill(enemy) {
+    if (enemy.type !== 'goblin') return;
+    killCount++;
+    if (!anacondaSpawned && killCount >= C.ANACONDA.killsToSpawn && state === 'wave') {
+      anacondaSpawned = true;
+      const pos = spawnPositions[Math.floor(Math.random() * spawnPositions.length)];
+      Enemies.spawnAnaconda(pos.r, pos.c);
+      bossAnnouncement = 3.5;
+      UI.setWaveStatus('⚠ Anakonda Cesarska nadchodzi!');
+    }
+  }
+
+  return Object.assign(pub, { init, startWave, addKill });
 })();
 
 window.addEventListener('load', () => Game.init());

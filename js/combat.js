@@ -74,12 +74,12 @@ const Combat = (() => {
         const dx = e.x - cx, dy = e.y - cy;
         if (Math.sqrt(dx*dx + dy*dy) <= splashPx) {
           e.takeDamage(p.dmg);
-          if (e.dead) { Game.gold += C.GOBLIN.reward; Audio.play('goblinDeath'); UI.showFloatingText('+' + C.GOBLIN.reward + 'g', e.x, e.y); }
+          if (e.dead) { Game.gold += e.reward; Game.addKill(e); Audio.play('goblinDeath'); UI.showFloatingText('+' + e.reward + 'g', e.x, e.y); }
         }
       }
     } else {
       p.targetRef.takeDamage(p.dmg);
-      if (p.targetRef.dead) { Game.gold += C.GOBLIN.reward; Audio.play('goblinDeath'); UI.showFloatingText('+' + C.GOBLIN.reward + 'g', p.targetRef.x, p.targetRef.y); }
+      if (p.targetRef.dead) { Game.gold += p.targetRef.reward; Game.addKill(p.targetRef); Audio.play('goblinDeath'); UI.showFloatingText('+' + p.targetRef.reward + 'g', p.targetRef.x, p.targetRef.y); }
     }
   }
 

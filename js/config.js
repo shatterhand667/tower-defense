@@ -62,4 +62,10 @@ const C = {
     hp: 60, speed: 1.5, reward: 15,
     dmgToCastle: 1, dmgToTower: 20, atkRate: 1.0,
   },
+
+  ANACONDA: {
+    hp: 280, speed: 0.85, reward: 60,
+    dmgToCastle: 3, dmgToTower: 45, atkRate: 0.7,
+    killsToSpawn: 10,   // po ilu zabitych goblinach się pojawia
+  },
 };
