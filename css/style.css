@@ -3,6 +3,7 @@
 body {
   background: #111;
   display: flex;
+  justify-content: center;
   align-items: flex-start;
   min-height: 100vh;
   font-family: 'Courier New', monospace;
