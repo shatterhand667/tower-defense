@@ -262,5 +262,5 @@ const UI = (() => {
     }
   }
 
-  return { init, update, updateSidebar, showTowerInfo, hideInfo, setWaveStatus, setStartBtnEnabled, showFloatingText, drawFloats };
+  return { init, update, updateSidebar, showTowerInfo, hideInfo, setWaveStatus, setStartBtnEnabled, showFloatingText, drawFloats, highlightBtn: _highlightBtn };
 })();

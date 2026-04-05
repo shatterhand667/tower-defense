@@ -365,6 +365,8 @@ const Game = (() => {
       const placed = Towers.place(t.r, t.c, selectedTowerType);
       if (placed) {
         gold = gold + wallRefund - def.cost;
+        selectedTowerType = null;
+        UI.highlightBtn(null);
         Audio.play('place');
         UI.updateSidebar();
         cachedPath = _buildCombinedPath();
