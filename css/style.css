@@ -18,6 +18,7 @@ body {
   flex-direction: column;
   gap: 10px;
   flex-shrink: 0;
+  position: relative;
 }
 
 #gameCanvas {
@@ -29,38 +30,46 @@ body {
 
 #bottom-bar {
   display: flex;
-  align-items: center;
-  gap: 16px;
+  align-items: stretch;
+  gap: 0;
   background: #1e2d1e;
   border: 1px solid #3a5a2a;
   border-radius: 6px;
   padding: 10px 14px;
+  gap: 0;
 }
 
-/* HUD stats — horizontal in bottom bar */
+/* Left column: stats + buttons stacked */
+#hud-and-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-right: 14px;
+  border-right: 1px solid #3a5a2a;
+}
+
 #hud {
   display: flex;
-  gap: 20px;
-  flex-shrink: 0;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.stat { display: flex; gap: 6px; align-items: baseline; font-size: 13px; }
+.stat { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
 .stat .label { color: #8aaa8a; }
 .stat .val   { color: #e8e8e8; font-weight: bold; }
 #gold-val    { color: #FFD700; }
 #castle-val  { color: #ff8888; }
 #wave-val    { color: #88aaff; }
 
-/* Wave controls */
 #wave-controls {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
+  flex-direction: column;
+  gap: 5px;
 }
 
 #btn-start-wave {
-  padding: 8px 16px;
+  padding: 7px 12px;
   background: #2a5a2a;
   color: #88ff88;
   border: 1px solid #5a9a5a;
@@ -179,8 +188,20 @@ body {
 .tower-name  { font-size: 11px; font-weight: bold; color: #aadd88; }
 .tower-cost  { font-size: 10px; color: #FFD700; }
 
-/* Tower info panel (selected on map) */
-#tower-info { display: none; }
+/* Tower info — floating overlay nad lewym rogiem canvasu */
+#tower-info {
+  display: none;
+  position: absolute;
+  bottom: calc(100% - 8px);  /* tuż nad bottom-bar */
+  left: 0;
+  background: #0e1e0e;
+  border: 1px solid #4a7a4a;
+  border-radius: 6px;
+  padding: 10px 12px;
+  min-width: 170px;
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.6);
+  z-index: 100;
+}
 
 .tower-info-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
 .tower-info-row .k { color: #8aaa8a; }
@@ -227,14 +248,12 @@ body {
 
 /* ---- FACTION PANEL (in bottom bar) ---- */
 #factions-panel {
-  border-left: 1px solid #3a5a2a;
   padding-left: 14px;
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  align-self: stretch;
 }
 
 #factions-header {

@@ -13,26 +13,39 @@
     <canvas id="gameCanvas"></canvas>
 
     <div id="bottom-bar">
-      <!-- HUD -->
-      <div id="hud">
-        <div class="stat"><span class="label">Złoto</span>  <span class="val" id="gold-val">200</span></div>
-        <div class="stat"><span class="label">Zamek</span>  <span class="val" id="castle-val">20/20</span></div>
-        <div class="stat"><span class="label">Fala</span>   <span class="val" id="wave-val">0</span></div>
+
+      <!-- Lewa kolumna: statsy + przyciski -->
+      <div id="hud-and-controls">
+        <div id="hud">
+          <div class="stat"><span class="label">Złoto</span>  <span class="val" id="gold-val">200</span></div>
+          <div class="stat"><span class="label">Zamek</span>  <span class="val" id="castle-val">20/20</span></div>
+          <div class="stat"><span class="label">Fala</span>   <span class="val" id="wave-val">0</span></div>
+        </div>
+        <div id="wave-controls">
+          <button id="btn-start-wave">▶ Rozpocznij Falę 1</button>
+          <button id="btn-new-game">↺ Nowa gra</button>
+        </div>
       </div>
 
-      <!-- Wave controls -->
-      <div id="wave-controls">
-        <button id="btn-start-wave">▶ Rozpocznij Falę 1</button>
-        <button id="btn-new-game">↺ Nowa gra</button>
-      </div>
       <!-- wave-status hidden, used by JS only -->
       <div id="wave-status" style="display:none"></div>
 
-      <!-- Faction synergies -->
+      <!-- Stronnictwa: reszta szerokości, 2 kolumny -->
       <div id="factions-panel">
         <div id="factions-header">Stronnictwa</div>
         <div id="factions-list"></div>
       </div>
+    </div>
+
+    <!-- Floating panel: info o wybranej wieży -->
+    <div id="tower-info">
+      <h3 id="ti-name">Wieża</h3>
+      <div class="tower-info-row"><span class="k">HP</span>         <span class="v" id="ti-hp">—</span></div>
+      <div class="tower-info-row"><span class="k">Obrażenia</span>  <span class="v" id="ti-dmg">—</span></div>
+      <div class="tower-info-row"><span class="k">Zasięg</span>     <span class="v" id="ti-range">—</span></div>
+      <div class="tower-info-row"><span class="k">Szybkostrz.</span><span class="v" id="ti-rate">—</span></div>
+      <button class="action-btn" id="btn-upgrade">Ulepsz</button>
+      <button class="action-btn" id="btn-sell">Sprzedaj</button>
     </div>
   </div>
 
@@ -131,16 +144,6 @@
       </div>
     </div>
 
-    <!-- Selected tower info -->
-    <div class="panel" id="tower-info">
-      <h3 id="ti-name">Wieża</h3>
-      <div class="tower-info-row"><span class="k">HP</span>         <span class="v" id="ti-hp">—</span></div>
-      <div class="tower-info-row"><span class="k">Obrażenia</span>  <span class="v" id="ti-dmg">—</span></div>
-      <div class="tower-info-row"><span class="k">Zasięg</span>     <span class="v" id="ti-range">—</span></div>
-      <div class="tower-info-row"><span class="k">Szybkostrz.</span><span class="v" id="ti-rate">—</span></div>
-      <button class="action-btn" id="btn-upgrade">Ulepsz</button>
-      <button class="action-btn" id="btn-sell">Sprzedaj</button>
-    </div>
 
   </div>
 
