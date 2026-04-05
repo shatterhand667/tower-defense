@@ -6,7 +6,40 @@ const UI = (() => {
     _bindSidebar();
   }
 
+  function _buildTooltip(typeId) {
+    const def = C.TOWERS[typeId];
+    if (!def) return '';
+    const facs = (Factions.TOWER_FACTIONS[typeId] || [])
+      .map(f => Factions.DEFS[f].icon + ' ' + Factions.DEFS[f].name)
+      .join('  ');
+
+    const rows = [];
+    if (def.hp)    rows.push(['HP', def.hp]);
+    if (def.dmg)   rows.push(['DMG', def.dmg]);
+    if (def.range) rows.push(['Zasięg', def.range.toFixed(1)]);
+    if (def.rate)  rows.push(['Szybk.', def.rate.toFixed(2) + '/s']);
+    if (def.splash)rows.push(['Splash', def.splash.toFixed(1)]);
+
+    const innates = [];
+    if (def.burnDps)       innates.push('Podpalenie ' + def.burnDps + '/s × ' + def.burnDuration + 's');
+    if (def.slowMult < 1)  innates.push('Spowalnia do ' + Math.round(def.slowMult * 100) + '%');
+    if (def.poisonDps)     innates.push('Trucizna ' + def.poisonDps + '/s × ' + def.poisonDuration + 's');
+    if (def.chainTargets)  innates.push('Łańcuch ×' + def.chainTargets);
+    if (def.pierce)        innates.push('Przebija wrogów');
+    if (def.thorns)        innates.push('Kolce ' + def.thorns + ' DMG');
+    if (def.goldInterval)  innates.push('+' + def.goldAmount + 'g co ' + def.goldInterval + 's');
+    if (def.obsBonus)      innates.push('+' + Math.round(def.obsBonus * 100) + '% szybk. sąsiad.');
+    if (def.tauntRadius)   innates.push('Taunt r=' + def.tauntRadius + ' kafelków');
+
+    return '<div class="tt-name">' + def.name + '  <span style="color:#FFD700">' + def.cost + 'g</span></div>'
+      + rows.map(([k, v]) => '<div class="tt-row"><span class="tt-key">' + k + '</span><span class="tt-val">' + v + '</span></div>').join('')
+      + (innates.length ? '<div class="tt-innate">' + innates.join('<br>') + '</div>' : '')
+      + (facs ? '<div class="tt-fac">' + facs + '</div>' : '');
+  }
+
   function _bindSidebar() {
+    const tooltip = document.getElementById('tower-tooltip');
+
     document.querySelectorAll('.tower-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const type = btn.dataset.type;
@@ -14,7 +47,27 @@ const UI = (() => {
         Game.selectedTowerType = Game.selectedTowerType === type ? null : type;
         _highlightBtn(Game.selectedTowerType);
       });
+
+      btn.addEventListener('mouseenter', (e) => {
+        tooltip.innerHTML = _buildTooltip(btn.dataset.type);
+        tooltip.style.display = 'block';
+        _positionTooltip(e);
+      });
+      btn.addEventListener('mousemove', _positionTooltip);
+      btn.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
     });
+
+    function _positionTooltip(e) {
+      const t = document.getElementById('tower-tooltip');
+      const tw = t.offsetWidth || 170;
+      const th = t.offsetHeight || 120;
+      let left = e.clientX + 12;
+      let top  = e.clientY - 10;
+      if (left + tw > window.innerWidth  - 8) left = e.clientX - tw - 12;
+      if (top  + th > window.innerHeight - 8) top  = window.innerHeight - th - 8;
+      t.style.left = left + 'px';
+      t.style.top  = top  + 'px';
+    }
 
     document.getElementById('btn-start-wave').addEventListener('click', () => {
       Game.startWave();
