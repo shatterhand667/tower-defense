@@ -11,8 +11,12 @@ const Game = (() => {
   let hoverTile         = null;
   let cachedPath        = null;
   let lastTime          = 0;
-  let _isDragging       = false;
-  let _lastDragTile     = null;
+  let _isDragging           = false;
+  let _lastDragTile         = null;
+  let _selStart             = null;   // {r,c} — start zaznaczania
+  let _selRect              = null;   // {r1,c1,r2,c2} — prostokąt zaznaczenia
+  let _suppressNextClick    = false;
+  let selectedTiles         = [];     // zaznaczone wieże [{r,c}]
 
   // Wave spawning
   let spawnPositions  = [];
@@ -40,6 +44,17 @@ const Game = (() => {
     set selectedTowerType(v){ selectedTowerType = v; },
     get selectedTile()      { return selectedTile; },
     set selectedTile(v)     { selectedTile = v; },
+    sellSelected() {
+      const mult = wave === 0 ? 1.0 : 0.5;
+      for (const { r, c } of selectedTiles) {
+        const g = Towers.sell(r, c);
+        gold += g;
+      }
+      selectedTiles = [];
+      UI.hideMultiSelect();
+      UI.updateSidebar();
+      cachedPath = _buildCombinedPath();
+    },
   };
 
   function _generateSpawns() {
@@ -247,6 +262,29 @@ const Game = (() => {
       if (t && t.range > 0) _drawRange(t.r, t.c, t.range, 'rgba(180,255,180,0.8)');
     }
 
+    // Podświetlenie zaznaczonych wież
+    if (selectedTiles.length > 0) {
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = 2;
+      for (const { r, c } of selectedTiles) {
+        ctx.strokeRect(c * C.T + 1, r * C.T + 1, C.T - 2, C.T - 2);
+      }
+    }
+
+    // Prostokąt zaznaczania (podczas draga)
+    if (_selRect) {
+      const x = _selRect.c1 * C.T, y = _selRect.r1 * C.T;
+      const w = (_selRect.c2 - _selRect.c1 + 1) * C.T;
+      const h = (_selRect.r2 - _selRect.r1 + 1) * C.T;
+      ctx.fillStyle = 'rgba(255,215,0,0.08)';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = 'rgba(255,215,0,0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      ctx.strokeRect(x, y, w, h);
+      ctx.setLineDash([]);
+    }
+
     Enemies.draw(ctx);
     Combat.draw(ctx);
     UI.drawFloats(ctx);
@@ -345,25 +383,42 @@ const Game = (() => {
     if (_isDragging && selectedTowerType) {
       if (_lastDragTile && _lastDragTile.r === t.r && _lastDragTile.c === t.c) return;
       _lastDragTile = t;
-      _tryPlace(t, true); // keepMode — nie czyść trybu podczas draga
+      _tryPlace(t, true);
+    } else if (_isDragging && _selStart) {
+      _selRect = {
+        r1: Math.min(_selStart.r, t.r), c1: Math.min(_selStart.c, t.c),
+        r2: Math.max(_selStart.r, t.r), c2: Math.max(_selStart.c, t.c),
+      };
     }
   }
 
   function _onMouseDown(e) {
     if (e.button !== 0) return;
-    if (!selectedTowerType) return;
     _isDragging = true;
     _lastDragTile = null;
+    _selStart = selectedTowerType ? null : _tileAt(e);
+    _selRect  = null;
   }
 
   function _onMouseUp(e) {
-    // Jeśli był prawdziwy drag (ruch po kafelkach) — czyść tryb kupna
-    if (_isDragging && _lastDragTile !== null && selectedTowerType) {
-      selectedTowerType = null;
-      UI.highlightBtn(null);
+    if (_isDragging && _selRect) {
+      // Zakończenie draga zaznaczania — zbierz wieże w prostokącie
+      const tiles = [];
+      for (let r = _selRect.r1; r <= _selRect.r2; r++)
+        for (let c = _selRect.c1; c <= _selRect.c2; c++)
+          if (Towers.grid()[r]?.[c]) tiles.push({ r, c });
+      selectedTiles = tiles;
+      if (tiles.length > 0) {
+        selectedTile = null;
+        UI.hideInfo();
+        UI.showMultiSelect(tiles);
+      }
+      _suppressNextClick = true;
     }
     _isDragging = false;
     _lastDragTile = null;
+    _selStart = null;
+    _selRect  = null;
   }
 
   // keepMode=true podczas draga (nie czyść trybu po każdym postawieniu)
@@ -395,14 +450,21 @@ const Game = (() => {
 
   function _onClick(e) {
     if (state === 'gameover' || state === 'won') return;
+    if (_suppressNextClick) { _suppressNextClick = false; return; }
     const t = _tileAt(e);
     const tower = Towers.grid()[t.r]?.[t.c];
 
     if (selectedTowerType) {
       const tower2 = Towers.grid()[t.r]?.[t.c];
       const wallHere = tower2 && tower2.typeId === 'WALL';
-      if (tower2 && !wallHere) return; // kliknięcie na istniejącą wieżę w trybie kupna — ignoruj
-      _tryPlace(t);
+      if (tower2) {
+        // Kliknięcie na istniejącą wieżę/mur w trybie kupna — pokaż sell/upgrade
+        selectedTowerType = null;
+        UI.highlightBtn(null);
+        UI.showTowerInfo(t);
+        return;
+      }
+      _tryPlace(t, true);
       return;
     }
 
@@ -416,14 +478,18 @@ const Game = (() => {
     // Kliknięcie na pusty kafelek bez trybu kupna — odznacz
     selectedTile = null;
     selectedTowerType = null;
+    selectedTiles = [];
     UI.hideInfo();
+    UI.hideMultiSelect();
   }
 
   function _onRightClick(e) {
     e.preventDefault();
     selectedTowerType = null;
     selectedTile = null;
+    selectedTiles = [];
     UI.hideInfo();
+    UI.hideMultiSelect();
     document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('selected'));
   }
 

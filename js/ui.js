@@ -81,6 +81,10 @@ const UI = (() => {
       }
     });
 
+    document.getElementById('btn-sell-all').addEventListener('click', () => {
+      Game.sellSelected();
+    });
+
     document.getElementById('btn-sell').addEventListener('click', () => {
       if (!Game.selectedTile) return;
       const gold = Towers.sell(Game.selectedTile.r, Game.selectedTile.c);
@@ -186,14 +190,7 @@ const UI = (() => {
     _refreshInfo(tile);
   }
 
-  function _positionTowerInfo() {
-    const canvas = document.getElementById('gameCanvas');
-    const panel  = document.getElementById('tower-info');
-    const r = canvas.getBoundingClientRect();
-    panel.style.position = 'fixed';
-    panel.style.left     = r.left + 'px';
-    panel.style.top      = (r.bottom + 8) + 'px';
-  }
+  function _positionTowerInfo() { _positionPanel('tower-info'); }
 
   function _refreshInfo(tile) {
     const tower = Towers.grid()[tile.r]?.[tile.c];
@@ -232,6 +229,35 @@ const UI = (() => {
 
   function hideInfo() { _hideInfo(); }
 
+  function _positionPanel(panelId) {
+    const canvas = document.getElementById('gameCanvas');
+    const panel  = document.getElementById(panelId);
+    const r = canvas.getBoundingClientRect();
+    panel.style.position = 'fixed';
+    panel.style.left     = r.left + 'px';
+    panel.style.top      = (r.bottom + 8) + 'px';
+  }
+
+  function showMultiSelect(tiles) {
+    _hideInfo();
+    const mult = Game.wave === 0 ? 1.0 : 0.5;
+    const totalGold = tiles.reduce((sum, { r, c }) => {
+      const t = Towers.grid()[r][c];
+      return sum + (t ? Math.floor(t.totalCost * mult) : 0);
+    }, 0);
+    document.getElementById('ms-info').textContent =
+      tiles.length + ' ' + (tiles.length === 1 ? 'wieża zaznaczona' : 'wieże zaznaczone');
+    document.getElementById('btn-sell-all').textContent =
+      'Sprzedaj wszystkie (' + totalGold + 'g)';
+    const panel = document.getElementById('multi-sell-panel');
+    panel.style.display = 'block';
+    _positionPanel('multi-sell-panel');
+  }
+
+  function hideMultiSelect() {
+    document.getElementById('multi-sell-panel').style.display = 'none';
+  }
+
   function setWaveStatus(text) {
     document.getElementById('wave-status').textContent = text;
   }
@@ -262,5 +288,5 @@ const UI = (() => {
     }
   }
 
-  return { init, update, updateSidebar, showTowerInfo, hideInfo, setWaveStatus, setStartBtnEnabled, showFloatingText, drawFloats, highlightBtn: _highlightBtn };
+  return { init, update, updateSidebar, showTowerInfo, hideInfo, setWaveStatus, setStartBtnEnabled, showFloatingText, drawFloats, highlightBtn: _highlightBtn, showMultiSelect, hideMultiSelect };
 })();
