@@ -176,5 +176,5 @@ const Grid = (() => {
     ctx.strokeRect(x, y, t, t);
   }
 
-  return { init, getCell, isWalkable, draw };
+  return { init, getCell, setCell, isWalkable, draw };
 })();
