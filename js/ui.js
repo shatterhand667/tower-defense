@@ -186,12 +186,22 @@ const UI = (() => {
     _refreshInfo(tile);
   }
 
+  function _positionTowerInfo() {
+    const canvas = document.getElementById('gameCanvas');
+    const panel  = document.getElementById('tower-info');
+    const r = canvas.getBoundingClientRect();
+    panel.style.position = 'fixed';
+    panel.style.left     = r.left + 'px';
+    panel.style.top      = (r.bottom + 8) + 'px';
+  }
+
   function _refreshInfo(tile) {
     const tower = Towers.grid()[tile.r]?.[tile.c];
     if (!tower) { _hideInfo(); return; }
     const def = C.TOWERS[tower.typeId];
     const panel = document.getElementById('tower-info');
     panel.style.display = 'block';
+    _positionTowerInfo();
     document.getElementById('ti-name').textContent  = def.name + ' Lv' + (tower.level + 1);
     document.getElementById('ti-hp').textContent    = Math.ceil(tower.hp) + '/' + tower.maxHp;
     document.getElementById('ti-dmg').textContent   = tower.dmg;

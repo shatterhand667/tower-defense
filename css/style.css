@@ -18,7 +18,6 @@ body {
   flex-direction: column;
   gap: 10px;
   flex-shrink: 0;
-  position: relative;
 }
 
 #gameCanvas {
@@ -188,18 +187,16 @@ body {
 .tower-name  { font-size: 11px; font-weight: bold; color: #aadd88; }
 .tower-cost  { font-size: 10px; color: #FFD700; }
 
-/* Tower info — floating overlay nad lewym rogiem canvasu */
+/* Tower info — floating panel, pozycjonowany przez JS */
 #tower-info {
   display: none;
-  position: absolute;
-  bottom: calc(100% - 8px);  /* tuż nad bottom-bar */
-  left: 0;
+  position: fixed;
   background: #0e1e0e;
   border: 1px solid #4a7a4a;
   border-radius: 6px;
   padding: 10px 12px;
   min-width: 170px;
-  box-shadow: 0 -4px 16px rgba(0,0,0,0.6);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.7);
   z-index: 100;
 }
 

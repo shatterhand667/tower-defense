@@ -350,9 +350,7 @@ const Game = (() => {
       // If there's a wall here and we're placing a non-wall tower → replace wall
       const wallHere = tower && tower.typeId === 'WALL';
       if (tower && !wallHere) {
-        // Occupied by a real tower — select it instead
-        selectedTowerType = null;
-        UI.showTowerInfo(t);
+        // W trybie kupna — ignoruj kliknięcie na istniejącą wieżę
         return;
       }
 
