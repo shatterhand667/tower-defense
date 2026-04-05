@@ -229,15 +229,12 @@ body {
 #factions-panel {
   border-left: 1px solid #3a5a2a;
   padding-left: 14px;
-  min-width: 160px;
-  max-height: 120px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #3a5a2a #111;
-  align-self: stretch;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  align-self: stretch;
 }
 
 #factions-header {
@@ -245,11 +242,15 @@ body {
   text-transform: uppercase;
   letter-spacing: 1px;
   color: #7ab87a;
-  margin-bottom: 2px;
   flex-shrink: 0;
 }
 
-#factions-list { display: flex; flex-direction: column; gap: 2px; }
+#factions-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 12px;
+  align-content: start;
+}
 
 .faction-empty {
   font-size: 11px; color: #4a6a4a;
