@@ -66,6 +66,17 @@ const C = {
         { cost: 130, hp: 120, dmg: 90, range: 7.5, rate: 0.5 },
       ],
     },
+    GOLEM: {
+      name: 'Golem', cost: 110, sellMult: 0.5,
+      hp: 300, dmg: 8, range: 1.0, rate: 0.5, splash: 0,
+      tauntRadius: 2.5,   // kafelki
+      regen: 5,           // HP/s podczas fali
+      color: '#5a6e4a', barrelColor: '#3a4e2a',
+      upgrades: [
+        { cost: 80,  hp: 450, dmg: 12, range: 1.0, rate: 0.6 },
+        { cost: 130, hp: 650, dmg: 18, range: 1.5, rate: 0.7 },
+      ],
+    },
   },
 
   // ─── Typy zbroi ──────────────────────────────────────────────────────────────

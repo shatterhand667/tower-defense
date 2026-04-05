@@ -65,20 +65,36 @@ class Goblin {
     this.attackTarget = best ? {r: best.r, c: best.c} : null;
   }
 
+  _checkTaunt() {
+    for (const tower of Towers.list()) {
+      if (tower.typeId !== 'GOLEM' || tower.hp <= 0) continue;
+      const tx = tower.c * C.T + C.T / 2;
+      const ty = tower.r * C.T + C.T / 2;
+      const dx = this.x - tx, dy = this.y - ty;
+      if (Math.sqrt(dx*dx + dy*dy) <= tower.tauntRadius * C.T) {
+        this.state = 'attacking';
+        this.attackTarget = { r: tower.r, c: tower.c };
+        return true;
+      }
+    }
+    return false;
+  }
+
   update(dt) {
     if (this.dead || this.reached) return;
 
     if (this.regen > 0 && this.hp < this.maxHp)
       this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
 
-    // Periodic path recalc
+    // Periodic path recalc + taunt check
     this.recalcTimer += dt;
     if (this.recalcTimer > 0.5) {
       this.recalcTimer = 0;
-      this.recalcPath();
+      if (!this._checkTaunt()) this.recalcPath();
     }
 
     if (this.state === 'walking') {
+      this._checkTaunt();
       if (!this.path || this.pathIdx >= this.path.length) {
         this.recalcPath();
         return;
@@ -280,6 +296,20 @@ class Drzewiec {
       this.state = 'walking'; this.attackTarget = null;
     }
   }
+  _checkTaunt() {
+    for (const tower of Towers.list()) {
+      if (tower.typeId !== 'GOLEM' || tower.hp <= 0) continue;
+      const tx = tower.c * C.T + C.T / 2;
+      const ty = tower.r * C.T + C.T / 2;
+      const dx = this.x - tx, dy = this.y - ty;
+      if (Math.sqrt(dx*dx + dy*dy) <= tower.tauntRadius * C.T) {
+        this.state = 'attacking';
+        this.attackTarget = { r: tower.r, c: tower.c };
+        return true;
+      }
+    }
+    return false;
+  }
   _findAttackTarget(r, c) {
     for (let cc = c + 1; cc < C.COLS; cc++) {
       if (Towers.grid()[r]?.[cc]) { this.attackTarget = {r, c: cc}; return; }
@@ -298,7 +328,7 @@ class Drzewiec {
       this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
     this.walkPhase += dt * 3;
     this.recalcTimer += dt;
-    if (this.recalcTimer > 0.5) { this.recalcTimer = 0; this.recalcPath(); }
+    if (this.recalcTimer > 0.5) { this.recalcTimer = 0; if (!this._checkTaunt()) this.recalcPath(); }
 
     if (this.state === 'walking') {
       if (!this.path || this.pathIdx >= this.path.length) { this.recalcPath(); return; }
@@ -435,6 +465,20 @@ class Anaconda {
       this.state = 'walking'; this.attackTarget = null;
     }
   }
+  _checkTaunt() {
+    for (const tower of Towers.list()) {
+      if (tower.typeId !== 'GOLEM' || tower.hp <= 0) continue;
+      const tx = tower.c * C.T + C.T / 2;
+      const ty = tower.r * C.T + C.T / 2;
+      const dx = this.x - tx, dy = this.y - ty;
+      if (Math.sqrt(dx*dx + dy*dy) <= tower.tauntRadius * C.T) {
+        this.state = 'attacking';
+        this.attackTarget = { r: tower.r, c: tower.c };
+        return true;
+      }
+    }
+    return false;
+  }
   _findAttackTarget(r, c) {
     for (let cc = c + 1; cc < C.COLS; cc++) {
       if (Towers.grid()[r]?.[cc]) { this.attackTarget = {r, c: cc}; return; }
@@ -455,7 +499,7 @@ class Anaconda {
     if (this.posHistory.length > 120) this.posHistory.length = 120;
 
     this.recalcTimer += dt;
-    if (this.recalcTimer > 0.5) { this.recalcTimer = 0; this.recalcPath(); }
+    if (this.recalcTimer > 0.5) { this.recalcTimer = 0; if (!this._checkTaunt()) this.recalcPath(); }
 
     if (this.state === 'walking') {
       if (!this.path || this.pathIdx >= this.path.length) { this.recalcPath(); return; }
@@ -589,6 +633,20 @@ class Ogr {
       this.state = 'walking'; this.attackTarget = null;
     }
   }
+  _checkTaunt() {
+    for (const tower of Towers.list()) {
+      if (tower.typeId !== 'GOLEM' || tower.hp <= 0) continue;
+      const tx = tower.c * C.T + C.T / 2;
+      const ty = tower.r * C.T + C.T / 2;
+      const dx = this.x - tx, dy = this.y - ty;
+      if (Math.sqrt(dx*dx + dy*dy) <= tower.tauntRadius * C.T) {
+        this.state = 'attacking';
+        this.attackTarget = { r: tower.r, c: tower.c };
+        return true;
+      }
+    }
+    return false;
+  }
   _findAttackTarget(r, c) {
     for (let cc = c + 1; cc < C.COLS; cc++) {
       if (Towers.grid()[r]?.[cc]) { this.attackTarget = {r, c: cc}; return; }
@@ -606,7 +664,7 @@ class Ogr {
     if (this.regen > 0 && this.hp < this.maxHp)
       this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
     this.recalcTimer += dt;
-    if (this.recalcTimer > 0.5) { this.recalcTimer = 0; this.recalcPath(); }
+    if (this.recalcTimer > 0.5) { this.recalcTimer = 0; if (!this._checkTaunt()) this.recalcPath(); }
 
     if (this.state === 'walking') {
       if (!this.path || this.pathIdx >= this.path.length) { this.recalcPath(); return; }

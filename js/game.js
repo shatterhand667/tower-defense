@@ -157,6 +157,12 @@ const Game = (() => {
         }
       }
 
+      // Golem regen
+      for (const t of Towers.list()) {
+        if (t.typeId === 'GOLEM' && t.regen > 0 && t.hp < t.maxHp)
+          t.hp = Math.min(t.maxHp, t.hp + t.regen * dt);
+      }
+
       Enemies.update(dt);
       Combat.update(dt, now);
 
@@ -186,6 +192,7 @@ const Game = (() => {
           UI.setStartBtnEnabled(false);
         } else {
           state = 'prep';
+          Towers.repairGolems();
           UI.setWaveStatus('Fala ' + wave + ' ukończona! Buduj obronę.');
           UI.setStartBtnEnabled(true);
           const nextWave = wave + 1;

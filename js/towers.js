@@ -21,7 +21,9 @@ const Towers = (() => {
       dmg: def.dmg, range: def.range, rate: def.rate, splash: def.splash || 0,
       lastShot: 0,
       totalCost: def.cost,
-      angle: 0,   // barrel angle for drawing
+      angle: 0,
+      tauntRadius: def.tauntRadius || 0,
+      regen: def.regen || 0,
     };
     _grid[r][c] = t;
     _list.push(t);
@@ -50,7 +52,15 @@ const Towers = (() => {
     t.hp = up.hp; t.maxHp = up.hp;
     t.dmg = up.dmg; t.range = up.range; t.rate = up.rate;
     if (up.splash !== undefined) t.splash = up.splash;
+    if (up.tauntRadius !== undefined) t.tauntRadius = up.tauntRadius;
     return true;
+  }
+
+  // Przywraca HP wszystkich Golemów do maksimum (wywoływane po zakończeniu fali)
+  function repairGolems() {
+    for (const t of _list) {
+      if (t.typeId === 'GOLEM') t.hp = t.maxHp;
+    }
   }
 
   function takeDamage(r, c, amount) {
@@ -84,7 +94,36 @@ const Towers = (() => {
       ctx.strokeRect(x + 1, y + 1, s - 2, s - 2);
     }
 
-    if (t.typeId === 'WALL') {
+    if (t.typeId === 'GOLEM') {
+      const cx = x + s/2, cy = y + s/2;
+      // Kamienny korpus
+      ctx.fillStyle = '#5a6040';
+      ctx.fillRect(x + 3, y + 6, s - 6, s - 8);
+      // Mech — zielone plamy
+      ctx.fillStyle = '#3a6a20';
+      ctx.beginPath(); ctx.arc(x + 7,  y + 10, 4, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + s-8, y + s-10, 3, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + 10, y + s-8, 3, 0, Math.PI*2); ctx.fill();
+      // Twarz
+      ctx.fillStyle = '#4a5030';
+      ctx.fillRect(x + 8, y + 8, s - 16, 12);
+      // Świecące oczy (zielone)
+      ctx.fillStyle = '#88ff44';
+      ctx.beginPath(); ctx.arc(cx - 5, y + 13, 2.5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + 5, y + 13, 2.5, 0, Math.PI*2); ctx.fill();
+      // Kontur
+      ctx.strokeStyle = '#2a3020';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x + 3, y + 6, s - 6, s - 8);
+      // Aura taunt (słaby krąg)
+      ctx.strokeStyle = 'rgba(136,255,68,0.15)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.arc(cx, cy, t.tauntRadius * C.T, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    } else if (t.typeId === 'WALL') {
       // Solid stone wall block
       ctx.fillStyle = '#8a7e6e';
       ctx.fillRect(x + 1, y + 1, s - 2, s - 2);
@@ -147,7 +186,7 @@ const Towers = (() => {
     init,
     grid: () => _grid,
     list: () => _list,
-    canPlace, place, sell, tryUpgrade, takeDamage,
+    canPlace, place, sell, tryUpgrade, takeDamage, repairGolems,
     draw,
   };
 })();
