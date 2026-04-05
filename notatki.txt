@@ -20,12 +20,18 @@ lucznik goblin - strzela w wieze. atakuje zamek z dystansu. masz większy zasieg
 
 ogry
 
-mini Boss - drzewiec / ent
+
 
 
 co 10 fal - trzęsienie ziemi i zmiania mapy. żeby trzeba było na nowo budowac mur. 2 jamy zmieniają miejsce
 
 mechanizm wcześniejszego wysylania fal za kase
 
-budowanie budynkow - budujesz bibliotekę - dostajesz bestariusz
+budowanie budynkow - budujesz bibliotekę - dostajesz bestariusz; kuznia - wyższy atak.
+licznik potworow na fale
 
+przyspieszenie czasu
+
+rycerz - z pila mechaniczna - scina drzewa
+
+wybrać jednostke - ile ma hp
