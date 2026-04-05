@@ -25,9 +25,9 @@ body {
   width: 210px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   flex-shrink: 0;
-  max-height: 100vh;
+  max-height: calc(100vh - 32px);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #3a5a2a #1e2d1e;
@@ -60,29 +60,34 @@ body {
 #castle-val  { color: #ff8888; }
 #wave-val    { color: #88aaff; }
 
-/* Tower buttons */
+/* Tower buttons — 2-column grid */
+#tower-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
 .tower-btn {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
+  gap: 3px;
+  padding: 6px 4px;
   border: 1px solid #3a5a2a;
   border-radius: 4px;
   cursor: pointer;
   background: #162516;
   transition: background 0.15s, border-color 0.15s;
-  margin-bottom: 6px;
   user-select: none;
+  text-align: center;
 }
-
-.tower-btn:last-child { margin-bottom: 0; }
 
 .tower-btn:hover     { background: #223d22; border-color: #5a8a5a; }
 .tower-btn.selected  { background: #2a5a2a; border-color: #9aca9a; box-shadow: 0 0 6px rgba(100,220,100,0.4); }
 .tower-btn.unaffordable { opacity: 0.45; cursor: not-allowed; }
 
 .tower-icon {
-  width: 24px; height: 24px;
+  width: 28px; height: 28px;
   border-radius: 3px;
   border: 1px solid rgba(255,255,255,0.2);
   flex-shrink: 0;
@@ -108,8 +113,8 @@ body {
 .tower-info-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
 .tower-info-row .k { color: #8aaa8a; }
 .tower-info-row .v { color: #e8e8e8; }
-.tower-name  { font-size: 14px; font-weight: bold; color: #aadd88; margin-bottom: 6px; }
-.tower-cost  { font-size: 12px; color: #FFD700; margin-left: auto; }
+.tower-name  { font-size: 11px; font-weight: bold; color: #aadd88; }
+.tower-cost  { font-size: 10px; color: #FFD700; }
 
 /* Tower info panel */
 #tower-info { display: none; }
