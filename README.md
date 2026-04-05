@@ -19,11 +19,13 @@ js/
   grid.js         — siatka 30×20, rendering kafelków (trawa/drzewo/spawn/zamek)
   pathfinding.js  — BFS, unia ścieżek ze wszystkich punktów spawnu
   towers.js       — stawianie, ulepszanie (lv 1→3), sprzedaż wież
-  enemies.js      — klasa Goblin, ruch po ścieżce, tryb ataku na mury
+  monsters.js     — rejestr typów wrogów (id, tier, create factory)
+  enemies.js      — klasy Goblin/Drzewiec/Anaconda, ruch po ścieżce, ataki na mury
   combat.js       — strzelanie wież, pociski, obrażenia, splash
   audio.js        — Web Audio API: ambient muzyka proceduralna + efekty SFX
   ui.js           — sidebar HTML, floating text, info o wieży
-  game.js         — główna pętla, eventy myszy, zarządzanie falami
+  mapObjects.js   — losowe drzewa terenowe z walidacją BFS
+  game.js         — główna pętla, eventy myszy, zarządzanie falami, kill-eventy
 css/
   style.css
 index.html
@@ -40,8 +42,13 @@ index.html
 
 Każda wieża ma 3 poziomy ulepszeń. Sprzedaż: 100% przed falą 1, 50% po.
 
-## Wrogowie (`C.GOBLIN`)
-- **Goblin** — HP 60, prędkość 1.5 kafelka/s, nagroda 15g
+## Wrogowie (`js/monsters.js`)
+
+| ID | Tier | HP | Prędkość | Nagroda | Trigger |
+|----|------|----|----------|---------|---------|
+| GOBLIN | 1 | 60 | 1.5 kafelka/s | 15g | główna fala |
+| DRZEWIEC | 2 | 120 | 1.1 kafelka/s | 25g | co 7 zabitych goblinów |
+| ANACONDA | 3 | 280 | 0.85 kafelka/s | 60g | po 10 zabitych goblinach (raz na falę) |
 
 ## Status segmentów
 
@@ -50,15 +57,16 @@ Każda wieża ma 3 poziomy ulepszeń. Sprzedaż: 100% przed falą 1, 50% po.
 | Silnik & mapa | ✅ gotowy |
 | Pathfinding BFS | ✅ gotowy |
 | System wież | ✅ gotowy |
-| System wrogów | ✅ gotowy |
-| System fal | ✅ beta (1 fala) |
+| Rejestr potworów | ✅ gotowy |
+| System wrogów | ✅ gotowy (Goblin, Drzewiec, Anaconda) |
+| System fal | ✅ beta (nieskończone fale) |
 | System walki | ✅ gotowy |
 | Ekonomia & UI | ✅ gotowy |
 | Audio | ✅ gotowy |
+| Obiekty mapy | ✅ gotowy |
 | Win/Lose & Polish | 🔲 do zrobienia |
 
 ## Do zrobienia
-- Więcej fal z rosnącą trudnością
-- Dodatkowe typy wrogów (zwiadowca, czołg)
+- Więcej fal z rosnącą trudnością i nowym składem
 - Ekran wygranej
 - Dodatkowe plansze

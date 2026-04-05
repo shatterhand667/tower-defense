@@ -37,7 +37,8 @@ grid.js         — czyta C.*
 pathfinding.js  — czyta C.*, woła Grid.*
 mapObjects.js   — czyta C.*, woła Grid.*, Pathfinding.*, Towers.*
 towers.js       — czyta C.*, woła Grid.*, Game.gold, Game.wave
-enemies.js      — czyta C.*, woła Grid.*, Pathfinding.*, Towers.*, Audio.*
+monsters.js     — czyta C.* (rejestr fabryk potworów)
+enemies.js      — czyta C.*, Monsters.*, woła Grid.*, Pathfinding.*, Towers.*, Audio.*
 combat.js       — czyta C.*, woła Towers.*, Enemies.*, Game.*, Audio.*, UI.*
 audio.js        — brak zależności (Web Audio API)
 ui.js           — woła Game.*, Towers.*, Audio.*
@@ -47,7 +48,7 @@ game.js         — orkiestruje wszystko, ładowany ostatni
 ### Kolejność `<script>` w index.html
 
 ```
-config → audio → grid → pathfinding → towers → enemies → combat → ui → mapObjects → game
+config → audio → grid → pathfinding → towers → monsters → enemies → combat → ui → mapObjects → game
 ```
 
 ### Układ wizualny
@@ -261,6 +262,44 @@ i zaktualizuj `Grid.isWalkable`.
 
 ---
 
+## 6b. monsters.js — rejestr potworów
+
+Centralny rejestr wszystkich typów wrogów. Oddziela *dane* (tier, opis) od *implementacji* (klasy w enemies.js).
+
+### Struktura wpisu
+
+```javascript
+Monsters.GOBLIN = {
+  id:          'GOBLIN',
+  name:        'Goblin',
+  description: '...',
+  tier:        1,        // 1=zwykły, 2=elita, 3=boss
+  create:      (r, c) => new Goblin(r, c),   // fabryka instancji
+};
+```
+
+### Publiczne API
+
+```javascript
+Monsters.ids()   // → ['GOBLIN', 'DRZEWIEC', 'ANACONDA', ...]
+```
+
+### Tabela potworów
+
+| ID | Tier | HP | Speed | Reward | dmgToCastle | Trigger |
+|----|------|----|-------|--------|-------------|---------|
+| GOBLIN | 1 | 60 | 1.5 | 15g | 1 | fala bazowa |
+| DRZEWIEC | 2 | 120 | 1.1 | 25g | 2 | co 7 zabitych goblinów |
+| ANACONDA | 3 | 280 | 0.85 | 60g | 3 | po 10 zabitych goblinach (1×/falę) |
+
+### Jak dodać nowego potwora
+
+1. Napisz klasę w `enemies.js` (wzoruj się na `Drzewiec`)
+2. Dodaj statystyki do `config.js`
+3. Dodaj wpis do `Monsters` w `monsters.js` — reszta systemu działa automatycznie
+
+---
+
 ## 7. towers.js — wieże
 
 ### Publiczne API
@@ -309,42 +348,66 @@ Gdy gracz klika na WALL z wybranym innym typem — wall zostaje sprzedany
 
 ## 8. enemies.js — wrogowie
 
-### Klasa `Goblin`
+Wszystkie klasy wrogów dziedziczą ten sam interfejs ruchu/ataku. Stany, ruch i atakowanie muru są wspólne.
 
-```javascript
-new Goblin(spawnR, spawnC)
-```
-
-#### Stany (`this.state`)
+### Stany (`this.state`)
 
 | Stan | Opis |
 |------|------|
 | `walking` | porusza się po ścieżce BFS |
 | `attacking` | stoi i atakuje blokujący mur |
-| `dead` | zabitý przez wieżę |
+| `dead` | zabity przez wieżę |
 | `reached` | dotarł do zamku |
 
-#### Ruch
+### Ruch (wspólny)
 
-- Pozycja w pikselach (`this.x`, `this.y`), prędkość `C.GOBLIN.speed * C.T` px/s
+- Pozycja w pikselach (`this.x`, `this.y`), prędkość `speed * C.T` px/s
 - Co 0.5s wywołuje `recalcPath()` → BFS z aktualnej pozycji
 - Po przeliczeniu `pathIdx = 1` (nie 0) — pomija aktualny kafelek, zapobiega drganiu
 - Jeśli BFS zwraca null → przejście w stan `attacking`
 
-#### Atakowanie muru
+### Atakowanie muru (wspólne)
 
 `_findAttackTarget(r, c)`: szuka wieży w tym samym rzędzie na prawo, fallback na najbliższą wieżę. Co `1/atkRate` sekund woła `Towers.takeDamage()`.
+
+### Klasa `Goblin` (Tier 1)
+
+```javascript
+new Goblin(spawnR, spawnC)
+// this.type = 'goblin'
+```
+
+Standardowy wróg. Zielony humanoid z oczami, rysowany proceduralnie.
+
+### Klasa `Drzewiec` (Tier 2)
+
+```javascript
+new Drzewiec(spawnR, spawnC)
+// this.type = 'drzewiec'
+```
+
+Wolniejszy, mocniejszy. Animacja kołysania bocznego (`walkPhase += dt * speed * 6`). Bursztynowe oczy, brązowy tułów z wypustkami gałęzi.
+
+### Klasa `Anaconda` (Tier 3 — Mini Boss)
+
+```javascript
+new Anaconda(spawnR, spawnC)
+// this.type = 'anaconda'
+```
+
+Ogon rysowany z historii poprzednich pozycji (`this.posHistory`, co 4 px). Rozwidlony język animowany co 0.3s. Najwolniejsza ale najtwardziej bije mury (dmgToTower: 45).
 
 ### Moduł `Enemies`
 
 ```javascript
 Enemies.init()
-Enemies.list()                   // → live array goblinów
-Enemies.spawnGoblin(r, c)
+Enemies.list()                          // → live array wszystkich wrogów
+Enemies.spawnGoblin(r, c)               // skrót dla goblina bazowej fali
+Enemies.spawnByType(typeId, r, c)       // spawn przez Monsters[typeId].create()
 Enemies.update(dt)
 Enemies.draw(ctx)
-Enemies.removeDeadAndReached()   // → { reached: N }, czyści listę
-Enemies.allGone()                // → bool
+Enemies.removeDeadAndReached()          // → { reached: N }, czyści listę
+Enemies.allGone()                       // → bool
 ```
 
 ---
@@ -493,6 +556,23 @@ klik na kafelek
 └─ nic nie pasuje → odznacz wszystko
 ```
 
+### Kill-eventy (`addKill(enemy)`)
+
+Wywoływane przez `combat.js` przy każdym zabiciu wroga.
+
+```javascript
+// Drzewiec co 7 goblinów
+if (killCount % C.DRZEWIEC.killsToSpawn === 0)
+  Enemies.spawnByType('DRZEWIEC', randomSpawn)
+
+// Anaconda raz na falę po 10 goblinach
+if (!anacondaSpawned && killCount >= C.ANACONDA.killsToSpawn)
+  Enemies.spawnByType('ANACONDA', randomSpawn)
+  bossAnnouncement = 3.5  // banner na ekranie
+```
+
+Tylko gobliny (`enemy.type === 'goblin'`) liczą się do `killCount`.
+
 ### `resetGame()`
 
 Resetuje wszystkie zmienne stanu, woła `init()` poszczególnych modułów ponownie.
@@ -541,10 +621,10 @@ Trzy scenariusze:
 
 ### Nowy typ wroga
 
-1. Dodaj definicję w `config.js`
-2. Stwórz klasę w `enemies.js` (wzoruj się na `Goblin`)
-3. Dodaj metodę `spawnXxx(r, c)` w module `Enemies`
-4. Wywołuj z `game.js` w logice fal
+1. Dodaj statystyki w `config.js` (hp, speed, reward, dmgToCastle, dmgToTower, atkRate)
+2. Stwórz klasę w `enemies.js` (wzoruj się na `Drzewiec`)
+3. Dodaj wpis w `monsters.js` (id, name, tier, create)
+4. Opcjonalnie: dodaj trigger w `game.js → addKill()` lub w logice fal `startWave()`
 
 ### Nowy obiekt mapy
 
