@@ -22,7 +22,9 @@ const Game = (() => {
   // Boss
   let killCount        = 0;
   let anacondaSpawned  = false;
-  let bossAnnouncement = 0; // timer (s) dla baneru
+  let ogrKillCounter   = 0;  // globalny licznik goblinów dla Ogra (nie resetuje się co falę)
+  let bossAnnouncement     = 0;   // timer (s) dla baneru
+  let bossAnnouncementType = '';  // 'anaconda' | 'ogr'
 
   // --- Expose mutable state as getters/setters so modules can reference Game.gold etc. ---
   const pub = {
@@ -105,7 +107,9 @@ const Game = (() => {
     spawnQueue        = [];
     killCount         = 0;
     anacondaSpawned   = false;
-    bossAnnouncement  = 0;
+    ogrKillCounter        = 0;
+    bossAnnouncement      = 0;
+    bossAnnouncementType  = '';
 
     spawnPositions = _generateSpawns();
     Grid.init(spawnPositions);
@@ -227,18 +231,30 @@ const Game = (() => {
   }
 
   function _drawBossAnnouncement() {
-    const alpha = Math.min(1, bossAnnouncement) * Math.min(1, (bossAnnouncement / 3.5) * 4);
+    const duration = bossAnnouncementType === 'ogr' ? 4.0 : 3.5;
+    const alpha = Math.min(1, bossAnnouncement) * Math.min(1, (bossAnnouncement / duration) * 4);
     ctx.save();
     ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
     ctx.fillStyle = 'rgba(0,0,0,0.65)';
     ctx.fillRect(0, canvas.height/2 - 44, canvas.width, 88);
-    ctx.fillStyle = '#ff4444';
-    ctx.font = 'bold 30px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('⚠  MINI BOSS  ⚠', canvas.width/2, canvas.height/2 - 8);
-    ctx.fillStyle = '#ffcc44';
-    ctx.font = 'bold 20px monospace';
-    ctx.fillText('Anakonda Cesarska', canvas.width/2, canvas.height/2 + 22);
+
+    if (bossAnnouncementType === 'ogr') {
+      ctx.fillStyle = '#ff6600';
+      ctx.font = 'bold 34px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('⚠⚠  BOSS  ⚠⚠', canvas.width/2, canvas.height/2 - 8);
+      ctx.fillStyle = '#ffdd44';
+      ctx.font = 'bold 22px monospace';
+      ctx.fillText('Ogr', canvas.width/2, canvas.height/2 + 22);
+    } else {
+      ctx.fillStyle = '#ff4444';
+      ctx.font = 'bold 30px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('⚠  MINI BOSS  ⚠', canvas.width/2, canvas.height/2 - 8);
+      ctx.fillStyle = '#ffcc44';
+      ctx.font = 'bold 20px monospace';
+      ctx.fillText('Anakonda Cesarska', canvas.width/2, canvas.height/2 + 22);
+    }
     ctx.restore();
   }
 
@@ -262,9 +278,10 @@ const Game = (() => {
     totalToSpawn = C.WAVE_SIZE + (wave - 1) * 3;
     spawnTimer   = 0;
     spawnQueue   = [...spawnPositions];
-    killCount        = 0;
-    anacondaSpawned  = false;
-    bossAnnouncement = 0;
+    killCount             = 0;
+    anacondaSpawned       = false;
+    bossAnnouncement      = 0;
+    bossAnnouncementType  = '';
     UI.setStartBtnEnabled(false);
     Audio.play('waveStart');
     UI.setWaveStatus('Fala ' + wave + ' — Idą gobliny!');
@@ -363,6 +380,7 @@ const Game = (() => {
   function addKill(enemy) {
     if (enemy.type !== 'goblin') return;
     killCount++;
+    ogrKillCounter++;
     if (state !== 'wave') return;
 
     // Drzewiec co 7 goblinów
@@ -377,8 +395,14 @@ const Game = (() => {
       anacondaSpawned = true;
       const pos = _randomSpawn();
       Enemies.spawnByType('ANACONDA', pos.r, pos.c);
-      bossAnnouncement = 3.5;
-      UI.setWaveStatus('⚠ Anakonda Cesarska nadchodzi!');
+    }
+
+    // Ogr co 50 goblinów (licznik nie resetuje się co falę)
+    if (ogrKillCounter % C.OGR.killsToSpawn === 0) {
+      const pos = _randomSpawn();
+      Enemies.spawnByType('OGR', pos.r, pos.c);
+      bossAnnouncement = 4.0; bossAnnouncementType = 'ogr';
+      UI.setWaveStatus('⚠⚠ OGR NADCHODZI! ⚠⚠');
     }
   }
 

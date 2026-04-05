@@ -44,11 +44,14 @@ Każda wieża ma 3 poziomy ulepszeń. Sprzedaż: 100% przed falą 1, 50% po.
 
 ## Wrogowie (`js/monsters.js`)
 
-| ID | Tier | HP | Prędkość | Nagroda | Trigger |
-|----|------|----|----------|---------|---------|
-| GOBLIN | 1 | 60 | 1.5 kafelka/s | 15g | główna fala |
-| DRZEWIEC | 2 | 120 | 1.1 kafelka/s | 25g | co 7 zabitych goblinów |
-| ANACONDA | 3 | 280 | 0.85 kafelka/s | 60g | po 10 zabitych goblinach (raz na falę) |
+| ID | Tier | HP | Regen | Zbroja | Prędkość | Nagroda | Trigger |
+|----|------|----|-------|--------|----------|---------|---------|
+| GOBLIN | 1 | 60 | — | Brak | 1.5 | 15g | główna fala |
+| DRZEWIEC | 2 | 120 | 1/s | Lekka | 1.1 | 25g | co 7 goblinów |
+| ANACONDA | 3 | 280 | 2/s | Lekka | 0.85 | 60g | po 10 goblinach (1×/falę) |
+| OGR | 4 | 600 | 3/s | Ciężka | 0.55 | 120g | co 50 goblinów (globalnie) |
+
+**Typy zbroi:** Lekka = −50% od łucznika (pierce) · Ciężka = −75% od kanionu (splash)
 
 ## Status segmentów
 
@@ -58,7 +61,8 @@ Każda wieża ma 3 poziomy ulepszeń. Sprzedaż: 100% przed falą 1, 50% po.
 | Pathfinding BFS | ✅ gotowy |
 | System wież | ✅ gotowy |
 | Rejestr potworów | ✅ gotowy |
-| System wrogów | ✅ gotowy (Goblin, Drzewiec, Anaconda) |
+| System wrogów | ✅ gotowy (Goblin, Drzewiec, Anaconda, Ogr) |
+| System zbroi i regeneracji | ✅ gotowy |
 | System fal | ✅ beta (nieskończone fale) |
 | System walki | ✅ gotowy |
 | Ekonomia & UI | ✅ gotowy |

@@ -58,20 +58,39 @@ const C = {
     },
   },
 
+  // ─── Typy zbroi ──────────────────────────────────────────────────────────────
+  // pierceMult  — mnożnik obrażeń od pocisków przebijających (łucznik)
+  // splashMult  — mnożnik obrażeń od wybuchu (kanon splash)
+  ARMOR: {
+    NONE:  { id: 'NONE',  pierceMult: 1.0, splashMult: 1.0 },
+    LIGHT: { id: 'LIGHT', pierceMult: 0.5, splashMult: 1.0 },
+    HEAVY: { id: 'HEAVY', pierceMult: 1.0, splashMult: 0.25 },
+  },
+
   GOBLIN: {
     hp: 60, speed: 1.5, reward: 15,
     dmgToCastle: 1, dmgToTower: 20, atkRate: 1.0,
+    armor: 'NONE', regen: 0,
   },
 
   DRZEWIEC: {
     hp: 120, speed: 1.1, reward: 25,
     dmgToCastle: 2, dmgToTower: 30, atkRate: 0.9,
-    killsToSpawn: 7,   // co ile zabitych goblinów się pojawia
+    killsToSpawn: 7,
+    armor: 'LIGHT', regen: 1,
   },
 
   ANACONDA: {
     hp: 280, speed: 0.85, reward: 60,
     dmgToCastle: 3, dmgToTower: 45, atkRate: 0.7,
-    killsToSpawn: 10,   // po ilu zabitych goblinach się pojawia
+    killsToSpawn: 10,
+    armor: 'LIGHT', regen: 2,
+  },
+
+  OGR: {
+    hp: 600, speed: 0.55, reward: 120,
+    dmgToCastle: 6, dmgToTower: 90, atkRate: 0.5,
+    killsToSpawn: 50,
+    armor: 'HEAVY', regen: 3,
   },
 };

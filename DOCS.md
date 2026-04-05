@@ -286,17 +286,48 @@ Monsters.ids()   // → ['GOBLIN', 'DRZEWIEC', 'ANACONDA', ...]
 
 ### Tabela potworów
 
-| ID | Tier | HP | Speed | Reward | dmgToCastle | Trigger |
-|----|------|----|-------|--------|-------------|---------|
-| GOBLIN | 1 | 60 | 1.5 | 15g | 1 | fala bazowa |
-| DRZEWIEC | 2 | 120 | 1.1 | 25g | 2 | co 7 zabitych goblinów |
-| ANACONDA | 3 | 280 | 0.85 | 60g | 3 | po 10 zabitych goblinach (1×/falę) |
+| ID | Tier | HP | Regen | Armor | Speed | Reward | dmgToCastle | Trigger |
+|----|------|----|-------|-------|-------|--------|-------------|---------|
+| GOBLIN | 1 | 60 | 0 | NONE | 1.5 | 15g | 1 | fala bazowa |
+| DRZEWIEC | 2 | 120 | 1/s | LIGHT | 1.1 | 25g | 2 | co 7 goblinów (per fala) |
+| ANACONDA | 3 | 280 | 2/s | LIGHT | 0.85 | 60g | 3 | po 10 goblinach (1×/falę) |
+| OGR | 4 | 600 | 3/s | HEAVY | 0.55 | 120g | 6 | co 50 goblinów (globalnie) |
+
+### System zbroi (`C.ARMOR`)
+
+Każdy potwór ma pole `armor: 'NONE' | 'LIGHT' | 'HEAVY'`. Przy trafieniu `takeDamage(amount, dmgType)` stosuje mnożnik z `C.ARMOR[this.armor]`:
+
+| Typ | pierceMult (łucznik) | splashMult (kanon splash) |
+|-----|----------------------|---------------------------|
+| NONE | 1.0 | 1.0 |
+| LIGHT | 0.5 | 1.0 |
+| HEAVY | 1.0 | 0.25 |
+
+Typy obrażeń (`dmgType`) przypisane do pocisków w `combat.js`:
+- `ARCHER` → `'pierce'`
+- `CANNON` → `'splash'`
+- `SNIPER` → `'normal'`
+
+### Regeneracja HP
+
+Każdy potwór ma pole `regen` (HP/s). W `update(dt)`:
+```javascript
+if (this.regen > 0 && this.hp < this.maxHp)
+  this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
+```
 
 ### Jak dodać nowego potwora
 
-1. Napisz klasę w `enemies.js` (wzoruj się na `Drzewiec`)
-2. Dodaj statystyki do `config.js`
+1. Napisz klasę w `enemies.js` (wzoruj się na `Ogr`)
+2. Dodaj statystyki do `config.js` (w tym `armor` i `regen`)
 3. Dodaj wpis do `Monsters` w `monsters.js` — reszta systemu działa automatycznie
+4. Opcjonalnie: dodaj trigger w `game.js → addKill()`
+
+### Jak dodać nowy typ zbroi
+
+1. Dodaj wpis do `C.ARMOR` w `config.js` z `pierceMult` i `splashMult`
+2. Przypisz nowy typ do potwora: `armor: 'NOWY_TYP'`
+3. `takeDamage` i `combat.js` działają automatycznie — zero dodatkowego kodu
 
 ---
 
@@ -388,14 +419,23 @@ new Drzewiec(spawnR, spawnC)
 
 Wolniejszy, mocniejszy. Animacja kołysania bocznego (`walkPhase += dt * speed * 6`). Bursztynowe oczy, brązowy tułów z wypustkami gałęzi.
 
-### Klasa `Anaconda` (Tier 3 — Mini Boss)
+### Klasa `Anaconda` (Tier 3)
 
 ```javascript
 new Anaconda(spawnR, spawnC)
 // this.type = 'anaconda'
 ```
 
-Ogon rysowany z historii poprzednich pozycji (`this.posHistory`, co 4 px). Rozwidlony język animowany co 0.3s. Najwolniejsza ale najtwardziej bije mury (dmgToTower: 45).
+Ogon rysowany z historii poprzednich pozycji (`this.posHistory`, co 4 px). Rozwidlony język animowany co 0.3s. Lekka zbroja (−50% od łucznika), regen 2 HP/s.
+
+### Klasa `Ogr` (Tier 4 — Boss)
+
+```javascript
+new Ogr(spawnR, spawnC)
+// this.type = 'ogr'
+```
+
+Masywny humanoid 2× większy od goblina. Animacja chodu (`walkPhase += dt * 4`), wielka maczuga. Ciężka zbroja (−75% splash od kanionu) — skutecznie zwalcza go łucznik i snajper. Regen 3 HP/s. Spawning co 50 zabitych goblinów (licznik globalny, nie resetuje się co falę). Ogłaszany banerem `⚠⚠ BOSS ⚠⚠`.
 
 ### Moduł `Enemies`
 

@@ -27,10 +27,18 @@ const Monsters = {
 
   ANACONDA: {
     id:          'ANACONDA',
-    name:        'Anakonda Cesarska',
-    description: 'Mini boss dżungli. Wolna, wytrzymała, mocno niszczy mury.',
+    name:        'Anakonda',
+    description: 'Wytrzymała i powolna. Łuski tłumią strzały. Mocno niszczy mury.',
     tier:        3,
     create:      (r, c) => new Anaconda(r, c),
+  },
+
+  OGR: {
+    id:          'OGR',
+    name:        'Ogr',
+    description: 'Boss. Masywny, wolny, odporny na splash. Regeneruje HP. Niszczy mury jednym uderzeniem.',
+    tier:        4,
+    create:      (r, c) => new Ogr(r, c),
   },
 
 };
