@@ -13,18 +13,20 @@ const Game = (() => {
   let lastTime          = 0;
 
   // Wave spawning
-  let spawnPositions = [];
-  let spawnQueue     = [];
-  let spawnTimer     = 0;
-  let spawnedCount   = 0;
-  let totalToSpawn   = 0;
+  let spawnPositions  = [];
+  let spawnQueue      = [];
+  let spawnTimer      = 0;
+  let spawnedCount    = 0;
+  let totalToSpawn    = 0;
+  let spawnInterval   = 1.8;
 
   // Boss
   let killCount        = 0;
   let anacondaSpawned  = false;
-  let ogrKillCounter   = 0;  // globalny licznik goblinów dla Ogra (nie resetuje się co falę)
+  let ogrKillCounter   = 0;   // globalny licznik goblinów dla Ogra (nie resetuje się co falę)
+  let ogrSpawned       = false; // czy Ogr pojawił się już kiedykolwiek (baner tylko raz)
   let bossAnnouncement     = 0;   // timer (s) dla baneru
-  let bossAnnouncementType = '';  // 'anaconda' | 'ogr'
+  let bossAnnouncementType = '';  // 'ogr'
 
   // --- Expose mutable state as getters/setters so modules can reference Game.gold etc. ---
   const pub = {
@@ -104,10 +106,12 @@ const Game = (() => {
     spawnedCount      = 0;
     totalToSpawn      = 0;
     spawnTimer        = 0;
+    spawnInterval     = 1.8;
     spawnQueue        = [];
-    killCount         = 0;
-    anacondaSpawned   = false;
+    killCount             = 0;
+    anacondaSpawned       = false;
     ogrKillCounter        = 0;
+    ogrSpawned            = false;
     bossAnnouncement      = 0;
     bossAnnouncementType  = '';
 
@@ -146,7 +150,7 @@ const Game = (() => {
       if (spawnedCount < totalToSpawn) {
         spawnTimer -= dt;
         if (spawnTimer <= 0) {
-          spawnTimer = C.WAVE_SPAWN_INTERVAL;
+          spawnTimer = spawnInterval;
           const pos = spawnQueue[spawnedCount % spawnQueue.length];
           Enemies.spawnGoblin(pos.r, pos.c);
           spawnedCount++;
@@ -175,10 +179,19 @@ const Game = (() => {
 
       // Wave complete?
       if (spawnedCount >= totalToSpawn && Enemies.allGone()) {
-        state = 'prep';
-        UI.setWaveStatus('Fala ' + wave + ' ukończona! Buduj obronę.');
-        UI.setStartBtnEnabled(true);
-        cachedPath = _buildCombinedPath();
+        if (wave >= C.WAVES.length) {
+          state = 'won';
+          Audio.play('waveStart');
+          UI.setWaveStatus('WYGRANA!');
+          UI.setStartBtnEnabled(false);
+        } else {
+          state = 'prep';
+          UI.setWaveStatus('Fala ' + wave + ' ukończona! Buduj obronę.');
+          UI.setStartBtnEnabled(true);
+          const nextWave = wave + 1;
+          document.getElementById('btn-start-wave').textContent = '▶ Rozpocznij Falę ' + nextWave;
+          cachedPath = _buildCombinedPath();
+        }
       }
     }
   }
@@ -267,7 +280,8 @@ const Game = (() => {
     ctx.fillText(text, canvas.width/2, canvas.height/2);
     ctx.fillStyle = '#fff';
     ctx.font = '22px monospace';
-    ctx.fillText('Odśwież stronę aby zagrać ponownie', canvas.width/2, canvas.height/2 + 50);
+    const sub = text === 'WYGRANA!' ? 'Kliknij ↺ Nowa gra aby zagrać ponownie' : 'Kliknij ↺ Nowa gra aby spróbować ponownie';
+    ctx.fillText(sub, canvas.width/2, canvas.height/2 + 50);
   }
 
   function startWave() {
@@ -275,16 +289,18 @@ const Game = (() => {
     wave++;
     state = 'wave';
     spawnedCount = 0;
-    totalToSpawn = C.WAVE_SIZE + (wave - 1) * 3;
-    spawnTimer   = 0;
-    spawnQueue   = [...spawnPositions];
+    const waveDef    = C.WAVES[wave - 1];
+    totalToSpawn     = waveDef.size;
+    spawnInterval    = waveDef.interval;
+    spawnTimer       = 0;
+    spawnQueue       = [...spawnPositions];
     killCount             = 0;
     anacondaSpawned       = false;
     bossAnnouncement      = 0;
     bossAnnouncementType  = '';
     UI.setStartBtnEnabled(false);
     Audio.play('waveStart');
-    UI.setWaveStatus('Fala ' + wave + ' — Idą gobliny!');
+    UI.setWaveStatus('Fala ' + wave + ' / ' + C.WAVES.length + ' — Idą gobliny!');
     cachedPath = _buildCombinedPath();
   }
 
@@ -401,8 +417,11 @@ const Game = (() => {
     if (ogrKillCounter % C.OGR.killsToSpawn === 0) {
       const pos = _randomSpawn();
       Enemies.spawnByType('OGR', pos.r, pos.c);
-      bossAnnouncement = 4.0; bossAnnouncementType = 'ogr';
-      UI.setWaveStatus('⚠⚠ OGR NADCHODZI! ⚠⚠');
+      if (!ogrSpawned) {
+        ogrSpawned = true;
+        bossAnnouncement = 4.0; bossAnnouncementType = 'ogr';
+        UI.setWaveStatus('⚠⚠ OGR NADCHODZI! ⚠⚠');
+      }
     }
   }
 

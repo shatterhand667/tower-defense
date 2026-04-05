@@ -16,8 +16,18 @@ const C = {
   START_GOLD:    200,
   CASTLE_MAX_HP: 20,
 
-  WAVE_SIZE:           10,
-  WAVE_SPAWN_INTERVAL: 2.0,
+  WAVES: [
+    { size: 20, interval: 1.8 },  // 1
+    { size: 26, interval: 1.7 },  // 2
+    { size: 32, interval: 1.6 },  // 3
+    { size: 38, interval: 1.5 },  // 4
+    { size: 44, interval: 1.4 },  // 5
+    { size: 50, interval: 1.3 },  // 6
+    { size: 56, interval: 1.2 },  // 7
+    { size: 62, interval: 1.1 },  // 8
+    { size: 68, interval: 1.0 },  // 9
+    { size: 80, interval: 0.9 },  // 10 — finałowa
+  ],
 
   TOWERS: {
     WALL: {
@@ -68,27 +78,27 @@ const C = {
   },
 
   GOBLIN: {
-    hp: 60, speed: 1.5, reward: 15,
+    hp: 60, speed: 3.0, reward: 15,
     dmgToCastle: 1, dmgToTower: 20, atkRate: 1.0,
     armor: 'NONE', regen: 0,
   },
 
   DRZEWIEC: {
-    hp: 120, speed: 1.1, reward: 25,
+    hp: 120, speed: 2.2, reward: 25,
     dmgToCastle: 2, dmgToTower: 30, atkRate: 0.9,
     killsToSpawn: 7,
     armor: 'LIGHT', regen: 1,
   },
 
   ANACONDA: {
-    hp: 280, speed: 0.85, reward: 60,
+    hp: 280, speed: 1.7, reward: 60,
     dmgToCastle: 3, dmgToTower: 45, atkRate: 0.7,
     killsToSpawn: 10,
     armor: 'LIGHT', regen: 2,
   },
 
   OGR: {
-    hp: 600, speed: 0.55, reward: 120,
+    hp: 600, speed: 1.1, reward: 120,
     dmgToCastle: 6, dmgToTower: 90, atkRate: 0.5,
     killsToSpawn: 50,
     armor: 'HEAVY', regen: 3,
