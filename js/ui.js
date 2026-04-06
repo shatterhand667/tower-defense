@@ -16,6 +16,7 @@ const UI = (() => {
     const rows = [];
     if (def.hp)    rows.push(['HP', def.hp]);
     if (def.dmg)   rows.push(['DMG', def.dmg]);
+    if (def.dmg && def.rate) rows.push(['DPS', (def.dmg * def.rate).toFixed(1)]);
     if (def.range) rows.push(['Zasięg', def.range.toFixed(1)]);
     if (def.rate)  rows.push(['Szybk.', def.rate.toFixed(2) + '/s']);
     if (def.splash)rows.push(['Splash', def.splash.toFixed(1)]);
@@ -37,6 +38,18 @@ const UI = (() => {
       + (facs ? '<div class="tt-fac">' + facs + '</div>' : '');
   }
 
+  function _positionTooltipAt(e) {
+    const t = document.getElementById('tower-tooltip');
+    const tw = t.offsetWidth || 200;
+    const th = t.offsetHeight || 120;
+    let left = e.clientX + 12;
+    let top  = e.clientY - 10;
+    if (left + tw > window.innerWidth  - 8) left = e.clientX - tw - 12;
+    if (top  + th > window.innerHeight - 8) top  = window.innerHeight - th - 8;
+    t.style.left = left + 'px';
+    t.style.top  = top  + 'px';
+  }
+
   function _bindSidebar() {
     const tooltip = document.getElementById('tower-tooltip');
 
@@ -51,23 +64,11 @@ const UI = (() => {
       btn.addEventListener('mouseenter', (e) => {
         tooltip.innerHTML = _buildTooltip(btn.dataset.type);
         tooltip.style.display = 'block';
-        _positionTooltip(e);
+        _positionTooltipAt(e);
       });
-      btn.addEventListener('mousemove', _positionTooltip);
+      btn.addEventListener('mousemove', _positionTooltipAt);
       btn.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
     });
-
-    function _positionTooltip(e) {
-      const t = document.getElementById('tower-tooltip');
-      const tw = t.offsetWidth || 170;
-      const th = t.offsetHeight || 120;
-      let left = e.clientX + 12;
-      let top  = e.clientY - 10;
-      if (left + tw > window.innerWidth  - 8) left = e.clientX - tw - 12;
-      if (top  + th > window.innerHeight - 8) top  = window.innerHeight - th - 8;
-      t.style.left = left + 'px';
-      t.style.top  = top  + 'px';
-    }
 
     document.getElementById('btn-start-wave').addEventListener('click', () => {
       Game.startWave();
@@ -117,6 +118,25 @@ const UI = (() => {
 
   const TIER_COLORS = ['', '#cd7f32', '#c0c0c0', '#FFD700'];
   const TIER_NAMES  = ['', 'Bronze',  'Silver',  'Gold'  ];
+
+  function _buildFactionTooltip(facId, activeTier) {
+    const def = Factions.DEFS[facId];
+    if (!def) return '';
+    let html = `<div class="tt-name">${def.icon} ${def.name}</div>`;
+    for (let i = 0; i < def.thresholds.length; i++) {
+      const thresh = def.thresholds[i];
+      const tierIdx = i + 1;
+      const color = TIER_COLORS[tierIdx];
+      const label = TIER_NAMES[tierIdx];
+      const isActive = activeTier >= tierIdx;
+      const opacity = isActive ? '1' : '0.4';
+      html += `<div class="tt-row" style="opacity:${opacity};margin-top:3px">` +
+        `<span class="tt-key" style="color:${color};min-width:52px">${label} (${thresh})</span>` +
+        `<span class="tt-val" style="color:${isActive ? '#e8e8e8' : '#888'}">${def.effects[i]}</span>` +
+        `</div>`;
+    }
+    return html;
+  }
 
   function _updateFactions() {
     const container = document.getElementById('factions-list');
@@ -177,6 +197,15 @@ const UI = (() => {
         `<span class="faction-count" style="${tier > 0 ? 'color:' + TIER_COLORS[tier] : ''}">${count}/${maxCount}</span>` +
         tierHtml;
 
+      const tooltip = document.getElementById('tower-tooltip');
+      row.addEventListener('mouseenter', (e) => {
+        tooltip.innerHTML = _buildFactionTooltip(facId, tier);
+        tooltip.style.display = 'block';
+        _positionTooltipAt(e);
+      });
+      row.addEventListener('mousemove', _positionTooltipAt);
+      row.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
       container.appendChild(row);
     }
   }
@@ -199,23 +228,47 @@ const UI = (() => {
     const panel = document.getElementById('tower-info');
     panel.style.display = 'block';
     _positionTowerInfo();
-    document.getElementById('ti-name').textContent  = def.name + ' Lv' + (tower.level + 1);
-    document.getElementById('ti-hp').textContent    = Math.ceil(tower.hp) + '/' + tower.maxHp;
-    document.getElementById('ti-dmg').textContent   = tower.dmg;
-    document.getElementById('ti-range').textContent = tower.range.toFixed(1);
-    document.getElementById('ti-rate').textContent  = tower.rate.toFixed(2) + '/s';
+    const curDps = tower.dmg > 0 && tower.rate > 0 ? tower.dmg * tower.rate : 0;
+
+    // Helper: zwraca ' <span class="ti-up">(→X)</span>' jeśli nowa wartość różni się
+    const up = tower.level < def.upgrades.length ? def.upgrades[tower.level] : null;
+    const _upHint = (cur, nv, fmt) => {
+      if (!up || nv === undefined || nv === cur) return '';
+      return ` <span class="ti-up">(→${fmt(nv)})</span>`;
+    };
+
+    const newDps = up && (up.dmg || tower.dmg) > 0 && (up.rate || tower.rate) > 0
+      ? (up.dmg !== undefined ? up.dmg : tower.dmg) * (up.rate !== undefined ? up.rate : tower.rate) : 0;
+
+    document.getElementById('ti-name').textContent = def.name + ' Lv' + (tower.level + 1);
+
+    document.getElementById('ti-hp').innerHTML =
+      (Math.ceil(tower.hp) + '/' + tower.maxHp) + _upHint(tower.maxHp, up?.hp, v => v);
+
+    document.getElementById('ti-dmg').innerHTML =
+      (tower.dmg || '—') + _upHint(tower.dmg, up?.dmg, v => v);
+
+    document.getElementById('ti-dps').innerHTML = curDps > 0
+      ? curDps.toFixed(1) + _upHint(curDps, newDps || undefined, v => v.toFixed(1))
+      : '—';
+
+    document.getElementById('ti-range').innerHTML = tower.range > 0
+      ? tower.range.toFixed(1) + _upHint(tower.range, up?.range, v => v.toFixed(1))
+      : '—';
+
+    document.getElementById('ti-rate').innerHTML = tower.rate > 0
+      ? tower.rate.toFixed(2) + '/s' + _upHint(tower.rate, up?.rate, v => v.toFixed(2) + '/s')
+      : '—';
 
     const sellMult = Game.wave === 0 ? 1.0 : 0.5;
     const sellGold = Math.floor(tower.totalCost * sellMult);
     const sellLabel = Game.wave === 0 ? 'Sprzedaj 100% (' + sellGold + 'g)' : 'Sprzedaj 50% (' + sellGold + 'g)';
     document.getElementById('btn-sell').textContent = sellLabel;
 
-    if (tower.level < def.upgrades.length) {
-      const up = def.upgrades[tower.level];
-      const canUp = Game.gold >= up.cost;
+    if (up) {
       const btn = document.getElementById('btn-upgrade');
       btn.textContent = 'Ulepsz (' + up.cost + 'g)';
-      btn.disabled = !canUp;
+      btn.disabled = Game.gold < up.cost;
     } else {
       const btn = document.getElementById('btn-upgrade');
       btn.textContent = 'MAX poziom';

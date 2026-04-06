@@ -230,6 +230,8 @@ body {
 .tower-info-row .k { color: #8aaa8a; }
 .tower-info-row .v { color: #e8e8e8; }
 
+.ti-up { color: #66bb66; font-size: 10px; margin-left: 3px; }
+
 .action-btn {
   width: 100%;
   padding: 7px;
@@ -259,7 +261,7 @@ body {
   font-size: 11px;
   color: #ccc;
   pointer-events: none;
-  min-width: 160px;
+  min-width: 200px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.6);
 }
 #tower-tooltip .tt-name  { font-size: 13px; font-weight: bold; color: #aadd88; margin-bottom: 5px; }
