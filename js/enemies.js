@@ -28,6 +28,7 @@ class Goblin {
     this.slowed   = { mult: 1, time: 0 };
     this.poisoned = { dps: 0, time: 0 };
     this.shadowStacks = 0;
+    this.stunTime = 0;
   }
 
   _currentTile() {
@@ -86,6 +87,7 @@ class Goblin {
 
   update(dt) {
     if (this.dead || this.reached) return;
+    if (this.stunTime > 0) { this.stunTime -= dt; return; }
 
     if (this.regen > 0 && this.hp < this.maxHp)
       this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
@@ -105,6 +107,10 @@ class Goblin {
       this.slowed.time -= dt;
     } else {
       this.slowed.mult = 1;
+    }
+    if (this.slowed.time > 0 && Factions.tier('NATURA') >= 2) {
+      this.hp -= 4 * dt;
+      if (this.hp <= 0) { this.dead = true; return; }
     }
 
     // Periodic path recalc + taunt check
@@ -164,10 +170,14 @@ class Goblin {
 
   takeDamage(amount, dmgType = 'normal') {
     const armorDef = C.ARMOR[this.armor] || C.ARMOR.NONE;
-    let mult = dmgType === 'pierce' ? armorDef.pierceMult
-             : dmgType === 'splash' ? armorDef.splashMult
+    let mult = dmgType === 'pierce'          ? armorDef.pierceMult
+             : dmgType === 'precyzja_pierce' ? 1.0
+             : dmgType === 'splash'          ? armorDef.splashMult
              : 1.0;
-    if (this.shadowStacks > 0) mult *= (1 + this.shadowStacks * 0.1);
+    if (this.shadowStacks > 0) {
+      if (this.shadowStacks >= 3 && Factions.tier('CIEN') >= 2) mult *= 2;
+      else mult *= (1 + this.shadowStacks * 0.1);
+    }
     this.hp -= amount * mult;
     if (this.hp <= 0) this.dead = true;
   }
@@ -307,6 +317,7 @@ class Drzewiec {
     this.slowed   = { mult: 1, time: 0 };
     this.poisoned = { dps: 0, time: 0 };
     this.shadowStacks = 0;
+    this.stunTime = 0;
   }
 
   _currentTile() {
@@ -353,11 +364,13 @@ class Drzewiec {
 
   update(dt) {
     if (this.dead || this.reached) return;
+    if (this.stunTime > 0) { this.stunTime -= dt; return; }
     if (this.regen > 0 && this.hp < this.maxHp)
       this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
     if (this.burning.time > 0) { this.hp -= this.burning.dps * dt; this.burning.time -= dt; if (this.hp <= 0) { this.dead = true; return; } }
     if (this.poisoned.time > 0) { this.hp -= this.poisoned.dps * dt; this.poisoned.time -= dt; if (this.hp <= 0) { this.dead = true; return; } }
     if (this.slowed.time > 0) { this.slowed.time -= dt; } else { this.slowed.mult = 1; }
+    if (this.slowed.time > 0 && Factions.tier('NATURA') >= 2) { this.hp -= 4 * dt; if (this.hp <= 0) { this.dead = true; return; } }
     this.walkPhase += dt * 3;
     this.recalcTimer += dt;
     if (this.recalcTimer > 0.5) { this.recalcTimer = 0; if (!this._checkTaunt()) this.recalcPath(); }
@@ -394,10 +407,14 @@ class Drzewiec {
 
   takeDamage(amount, dmgType = 'normal') {
     const armorDef = C.ARMOR[this.armor] || C.ARMOR.NONE;
-    let mult = dmgType === 'pierce' ? armorDef.pierceMult
-             : dmgType === 'splash' ? armorDef.splashMult
+    let mult = dmgType === 'pierce'          ? armorDef.pierceMult
+             : dmgType === 'precyzja_pierce' ? 1.0
+             : dmgType === 'splash'          ? armorDef.splashMult
              : 1.0;
-    if (this.shadowStacks > 0) mult *= (1 + this.shadowStacks * 0.1);
+    if (this.shadowStacks > 0) {
+      if (this.shadowStacks >= 3 && Factions.tier('CIEN') >= 2) mult *= 2;
+      else mult *= (1 + this.shadowStacks * 0.1);
+    }
     this.hp -= amount * mult;
     if (this.hp <= 0) this.dead = true;
   }
@@ -486,6 +503,7 @@ class Anaconda {
     this.slowed   = { mult: 1, time: 0 };
     this.poisoned = { dps: 0, time: 0 };
     this.shadowStacks = 0;
+    this.stunTime = 0;
   }
 
   // Metody ruchu identyczne z Goblin — reużycie przez kopiowanie
@@ -533,11 +551,13 @@ class Anaconda {
 
   update(dt) {
     if (this.dead || this.reached) return;
+    if (this.stunTime > 0) { this.stunTime -= dt; return; }
     if (this.regen > 0 && this.hp < this.maxHp)
       this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
     if (this.burning.time > 0) { this.hp -= this.burning.dps * dt; this.burning.time -= dt; if (this.hp <= 0) { this.dead = true; return; } }
     if (this.poisoned.time > 0) { this.hp -= this.poisoned.dps * dt; this.poisoned.time -= dt; if (this.hp <= 0) { this.dead = true; return; } }
     if (this.slowed.time > 0) { this.slowed.time -= dt; } else { this.slowed.mult = 1; }
+    if (this.slowed.time > 0 && Factions.tier('NATURA') >= 2) { this.hp -= 4 * dt; if (this.hp <= 0) { this.dead = true; return; } }
     this.posHistory.unshift({x: this.x, y: this.y});
     if (this.posHistory.length > 120) this.posHistory.length = 120;
 
@@ -576,10 +596,14 @@ class Anaconda {
 
   takeDamage(amount, dmgType = 'normal') {
     const armorDef = C.ARMOR[this.armor] || C.ARMOR.NONE;
-    let mult = dmgType === 'pierce' ? armorDef.pierceMult
-             : dmgType === 'splash' ? armorDef.splashMult
+    let mult = dmgType === 'pierce'          ? armorDef.pierceMult
+             : dmgType === 'precyzja_pierce' ? 1.0
+             : dmgType === 'splash'          ? armorDef.splashMult
              : 1.0;
-    if (this.shadowStacks > 0) mult *= (1 + this.shadowStacks * 0.1);
+    if (this.shadowStacks > 0) {
+      if (this.shadowStacks >= 3 && Factions.tier('CIEN') >= 2) mult *= 2;
+      else mult *= (1 + this.shadowStacks * 0.1);
+    }
     this.hp -= amount * mult;
     if (this.hp <= 0) this.dead = true;
   }
@@ -666,6 +690,7 @@ class Ogr {
     this.slowed   = { mult: 1, time: 0 };
     this.poisoned = { dps: 0, time: 0 };
     this.shadowStacks = 0;
+    this.stunTime = 0;
   }
 
   _currentTile() {
@@ -712,11 +737,13 @@ class Ogr {
 
   update(dt) {
     if (this.dead || this.reached) return;
+    if (this.stunTime > 0) { this.stunTime -= dt; return; }
     if (this.regen > 0 && this.hp < this.maxHp)
       this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
     if (this.burning.time > 0) { this.hp -= this.burning.dps * dt; this.burning.time -= dt; if (this.hp <= 0) { this.dead = true; return; } }
     if (this.poisoned.time > 0) { this.hp -= this.poisoned.dps * dt; this.poisoned.time -= dt; if (this.hp <= 0) { this.dead = true; return; } }
     if (this.slowed.time > 0) { this.slowed.time -= dt; } else { this.slowed.mult = 1; }
+    if (this.slowed.time > 0 && Factions.tier('NATURA') >= 2) { this.hp -= 4 * dt; if (this.hp <= 0) { this.dead = true; return; } }
     this.recalcTimer += dt;
     if (this.recalcTimer > 0.5) { this.recalcTimer = 0; if (!this._checkTaunt()) this.recalcPath(); }
 
@@ -753,10 +780,14 @@ class Ogr {
 
   takeDamage(amount, dmgType = 'normal') {
     const armorDef = C.ARMOR[this.armor] || C.ARMOR.NONE;
-    let mult = dmgType === 'pierce' ? armorDef.pierceMult
-             : dmgType === 'splash' ? armorDef.splashMult
+    let mult = dmgType === 'pierce'          ? armorDef.pierceMult
+             : dmgType === 'precyzja_pierce' ? 1.0
+             : dmgType === 'splash'          ? armorDef.splashMult
              : 1.0;
-    if (this.shadowStacks > 0) mult *= (1 + this.shadowStacks * 0.1);
+    if (this.shadowStacks > 0) {
+      if (this.shadowStacks >= 3 && Factions.tier('CIEN') >= 2) mult *= 2;
+      else mult *= (1 + this.shadowStacks * 0.1);
+    }
     this.hp -= amount * mult;
     if (this.hp <= 0) this.dead = true;
   }

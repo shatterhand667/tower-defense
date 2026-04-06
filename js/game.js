@@ -18,6 +18,8 @@ const Game = (() => {
   let _suppressNextClick    = false;
   let selectedTiles         = [];     // zaznaczone wieże [{r,c}]
 
+  let _castleRegenTimer = 0;
+
   // Wave spawning
   let spawnPositions  = [];
   let spawnQueue      = [];
@@ -143,6 +145,7 @@ const Game = (() => {
     ogrSpawned            = false;
     bossAnnouncement      = 0;
     bossAnnouncementType  = '';
+    _castleRegenTimer     = 0;
 
     spawnPositions = _generateSpawns();
     Grid.init(spawnPositions);
@@ -175,6 +178,16 @@ const Game = (() => {
     if (bossAnnouncement > 0) bossAnnouncement -= dt;
 
     if (state === 'wave') {
+      // FORTECA Silver: castle regen 1 HP per 20s
+      if (Factions.tier('FORTECA') >= 2 && castleHP < C.CASTLE_MAX_HP) {
+        _castleRegenTimer = (_castleRegenTimer || 0) + dt;
+        if (_castleRegenTimer >= 20) {
+          _castleRegenTimer -= 20;
+          castleHP = Math.min(C.CASTLE_MAX_HP, castleHP + 1);
+          UI.updateSidebar();
+        }
+      }
+
       // Spawn goblins from queue
       if (spawnedCount < totalToSpawn) {
         spawnTimer -= dt;
@@ -360,6 +373,10 @@ const Game = (() => {
     bossAnnouncementType  = '';
     UI.setStartBtnEnabled(false);
     Audio.play('waveStart');
+    if (Factions.tier('BOGACTWO') >= 2) {
+      Game.gold += 15;
+      UI.showFloatingText('+15g (Bogactwo)', C.COLS * C.T / 2, C.ROWS * C.T / 2);
+    }
     UI.setWaveStatus('Fala ' + wave + ' / ' + C.WAVES.length + ' — Idą gobliny!');
     cachedPath = _buildCombinedPath();
   }

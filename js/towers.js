@@ -40,10 +40,16 @@ const Towers = (() => {
       obsRadius:      def.obsRadius     || 0,
       obsBonus:       def.obsBonus      || 0,
       rateBonus:      0,   // filled by _recalcObsBuffs
+      baseMaxHp:      def.hp,
+      rangeBonus:     0,
+      splashBonus:    0,
+      shotCount:      0,
+      hitCount:       0,
+      factionGoldTimer: 0,
     };
     _grid[r][c] = t;
     _list.push(t);
-    _recalcObsBuffs();
+    _recalcAll();
     return t;
   }
 
@@ -67,6 +73,7 @@ const Towers = (() => {
     t.totalCost += up.cost;
     t.level++;
     t.hp = up.hp; t.maxHp = up.hp;
+    if (up.hp !== undefined) t.baseMaxHp = up.hp;
     t.dmg = up.dmg; t.range = up.range; t.rate = up.rate;
     if (up.splash       !== undefined) t.splash       = up.splash;
     if (up.tauntRadius  !== undefined) t.tauntRadius  = up.tauntRadius;
@@ -83,7 +90,7 @@ const Towers = (() => {
     if (up.goldAmount   !== undefined) t.goldAmount   = up.goldAmount;
     if (up.obsRadius    !== undefined) t.obsRadius    = up.obsRadius;
     if (up.obsBonus     !== undefined) t.obsBonus     = up.obsBonus;
-    _recalcObsBuffs();
+    _recalcAll();
     return true;
   }
 
@@ -98,7 +105,23 @@ const Towers = (() => {
     const t = _grid[r][c];
     if (!t) return false;
     t.hp -= amount;
-    if (t.hp <= 0) { _remove(r, c); return true; }
+    if (t.hp <= 0) {
+      // FORTECA Gold: destroyed wall/Golem/Bastion explodes (60 DMG, radius 1.5 tiles)
+      if (Factions.tier('FORTECA') >= 3) {
+        const eligible = ['WALL', 'MUR_KOLCZASTY', 'GOLEM', 'BASTION'];
+        if (eligible.includes(t.typeId)) {
+          const ex = t.c * C.T + C.T / 2, ey = t.r * C.T + C.T / 2;
+          const r2 = 1.5 * C.T;
+          for (const e of Enemies.list()) {
+            if (e.dead || e.reached) continue;
+            const dx = e.x - ex, dy = e.y - ey;
+            if (Math.sqrt(dx*dx + dy*dy) <= r2) e.takeDamage(60, 'splash');
+          }
+        }
+      }
+      _remove(r, c);
+      return true;
+    }
     return false;
   }
 
@@ -107,7 +130,7 @@ const Towers = (() => {
     if (!t) return;
     _grid[r][c] = null;
     _list = _list.filter(x => x !== t);
-    _recalcObsBuffs();
+    _recalcAll();
   }
 
   function thornsDmg(r, c) {
@@ -133,7 +156,52 @@ const Towers = (() => {
     }
   }
 
-  // Passive per-frame updates: Mennica gold generation
+  function _recalcAll() {
+    Factions.recalc(_list.map(t => t.typeId));
+    _recalcObsBuffs();
+    _recalcFactionBuffs();
+  }
+
+  function _recalcFactionBuffs() {
+    // Reset rangeBonus and splashBonus for all towers first
+    for (const t of _list) {
+      t.rangeBonus  = 0;
+      t.splashBonus = 0;
+    }
+
+    // PRECYZJA Bronze (tier≥1): +25% range for PRECYZJA towers
+    for (const t of _list) {
+      const facs = Factions.TOWER_FACTIONS[t.typeId] || [];
+      if (facs.includes('PRECYZJA')) {
+        t.rangeBonus = Factions.tier('PRECYZJA') >= 1 ? 0.25 : 0;
+      }
+    }
+
+    // DESTRUKCJA Bronze (tier≥1): +40% splash for DESTRUKCJA towers
+    for (const t of _list) {
+      const facs = Factions.TOWER_FACTIONS[t.typeId] || [];
+      if (facs.includes('DESTRUKCJA')) {
+        t.splashBonus = Factions.tier('DESTRUKCJA') >= 1 ? 0.4 : 0;
+      }
+    }
+
+    // FORTECA Bronze (tier≥1): ×2 maxHp for WALL, MUR_KOLCZASTY, GOLEM
+    const fortecaTypes = ['WALL', 'MUR_KOLCZASTY', 'GOLEM'];
+    for (const t of _list) {
+      if (!fortecaTypes.includes(t.typeId)) continue;
+      if (Factions.tier('FORTECA') >= 1) {
+        const ratio = t.hp / t.maxHp;
+        t.maxHp = t.baseMaxHp * 2;
+        t.hp = t.maxHp * ratio;
+      } else {
+        const ratio = t.hp / t.maxHp;
+        t.maxHp = t.baseMaxHp;
+        t.hp = Math.min(t.hp, t.maxHp);
+      }
+    }
+  }
+
+  // Passive per-frame updates: Mennica gold generation + BOGACTWO Gold
   function updatePassives(dt) {
     for (const t of _list) {
       if (t.typeId === 'MENNICA' && t.goldInterval > 0) {
@@ -143,6 +211,20 @@ const Towers = (() => {
           Game.gold += t.goldAmount;
           UI.showFloatingText('+' + t.goldAmount + 'g', t.c * C.T + C.T / 2, t.r * C.T);
           UI.updateSidebar();
+        }
+      }
+    }
+
+    // BOGACTWO Gold (tier≥3): BOGACTWO faction towers generate 1g per 10s
+    if (Factions.tier('BOGACTWO') >= 3) {
+      const bogTowers = ['KATAPULTA', 'KUSZNIK', 'WIEZA_OBS', 'MENNICA'];
+      for (const t of _list) {
+        if (!bogTowers.includes(t.typeId)) continue;
+        t.factionGoldTimer += dt;
+        if (t.factionGoldTimer >= 10) {
+          t.factionGoldTimer -= 10;
+          Game.gold += 1;
+          UI.showFloatingText('+1g', t.c * C.T + C.T / 2, t.r * C.T);
         }
       }
     }

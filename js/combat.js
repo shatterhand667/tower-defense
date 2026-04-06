@@ -11,7 +11,10 @@ const Combat = (() => {
   }
 
   function _effectiveRate(tower) {
-    return tower.rate * (1 + (tower.rateBonus || 0));
+    let rate = tower.rate * (1 + (tower.rateBonus || 0));
+    const inMech = (Factions.TOWER_FACTIONS[tower.typeId] || []).includes('MECHANIKA');
+    if (inMech && Factions.tier('MECHANIKA') >= 1) rate *= 1.25; // -20% cooldown = +25% rate
+    return rate;
   }
 
   function _towerShoot(now) {
@@ -25,7 +28,7 @@ const Combat = (() => {
 
       const tx = tower.c * C.T + C.T / 2;
       const ty = tower.r * C.T + C.T / 2;
-      const rangePx = tower.range * C.T;
+      const rangePx = tower.range * (1 + (tower.rangeBonus || 0)) * C.T;
 
       // Find nearest live enemy in range
       let target = null, minDist = Infinity;
@@ -38,6 +41,7 @@ const Combat = (() => {
       if (!target) continue;
 
       tower.lastShot = now;
+      tower.shotCount = (tower.shotCount || 0) + 1;
       tower.angle = Math.atan2(target.y - ty, target.x - tx) - Math.PI/2;
 
       // Determine dmgType
@@ -165,33 +169,139 @@ const Combat = (() => {
   }
 
   function _hitEnemy(e, dmg, dmgType, tower) {
-    // Apply status effects before damage
+    // PRECYZJA Silver: pierce from Precyzja towers ignores LIGHT armor
+    if (dmgType === 'pierce' && tower && Factions.tier('PRECYZJA') >= 2) {
+      const inP = (Factions.TOWER_FACTIONS[tower.typeId] || []).includes('PRECYZJA');
+      if (inP) dmgType = 'precyzja_pierce';
+    }
+
+    // PRECYZJA Gold: 25% crit (2× DMG)
+    if (tower && Factions.tier('PRECYZJA') >= 3) {
+      const inP = (Factions.TOWER_FACTIONS[tower.typeId] || []).includes('PRECYZJA');
+      if (inP && Math.random() < 0.25) dmg *= 2;
+    }
+
+    // MECHANIKA Silver: every 5th shot deals 2× DMG
+    if (tower && Factions.tier('MECHANIKA') >= 2) {
+      const inM = (Factions.TOWER_FACTIONS[tower.typeId] || []).includes('MECHANIKA');
+      if (inM && tower.shotCount % 5 === 0) dmg *= 2;
+    }
+
+    // Apply status effects (existing code)
     if (tower) {
       if (tower.burnDps    > 0) { e.burning  = { dps: tower.burnDps,    time: tower.burnDuration   }; }
       if (tower.slowMult   < 1) { e.slowed   = { mult: tower.slowMult,  time: tower.slowDuration   }; }
       if (tower.poisonDps  > 0) { e.poisoned = { dps: tower.poisonDps,  time: tower.poisonDuration }; }
-      if (tower.typeId === 'WIEZA_CIENIA') {
-        e.shadowStacks = Math.min(3, (e.shadowStacks || 0) + 1);
+    }
+
+    // NATURA Bronze (tier≥1): hits from Natura towers slow enemy 25% for 2s (if not already slower)
+    if (tower && Factions.tier('NATURA') >= 1) {
+      const inN = (Factions.TOWER_FACTIONS[tower.typeId] || []).includes('NATURA');
+      if (inN) {
+        const slowMult = Factions.tier('NATURA') >= 3 ? 0.5 : 0.75;
+        if (e.slowed.mult > slowMult) e.slowed = { mult: slowMult, time: 2 };
+        // NATURA Gold (tier≥3): spread slow to nearby enemies
+        if (Factions.tier('NATURA') >= 3) {
+          for (const other of Enemies.list()) {
+            if (other === e || other.dead || other.reached) continue;
+            const dx = other.x - e.x, dy = other.y - e.y;
+            if (Math.sqrt(dx*dx + dy*dy) <= 1.5 * C.T && other.slowed.mult > 0.5)
+              other.slowed = { mult: 0.5, time: 2 };
+          }
+        }
       }
     }
+
+    // ŻYWIOŁ Bronze (tier≥1): 20% chance to ignite (8 dps × 3s)
+    if (tower && Factions.tier('ZYWIOL') >= 1) {
+      const inZ = (Factions.TOWER_FACTIONS[tower.typeId] || []).includes('ZYWIOL');
+      if (inZ && Math.random() < 0.2) {
+        e.burning = { dps: 8, time: 3 };
+        // ŻYWIOŁ Gold (tier≥3): burn spreads to nearest enemy in 2 tiles
+        if (Factions.tier('ZYWIOL') >= 3) {
+          let nearest = null, minD = Infinity;
+          for (const other of Enemies.list()) {
+            if (other === e || other.dead || other.reached) continue;
+            const dx = other.x - e.x, dy = other.y - e.y;
+            const d = Math.sqrt(dx*dx + dy*dy);
+            if (d <= 2 * C.T && d < minD) { minD = d; nearest = other; }
+          }
+          if (nearest) nearest.burning = { dps: 8, time: 3 };
+        }
+      }
+    }
+
+    // CIEŃ: shadow stacks — WIEZA_CIENIA always, + all Cień towers when Bronze active
+    if (tower) {
+      const inC = (Factions.TOWER_FACTIONS[tower.typeId] || []).includes('CIEN');
+      if (tower.typeId === 'WIEZA_CIENIA' || (inC && Factions.tier('CIEN') >= 1)) {
+        e.shadowStacks = Math.min(3, (e.shadowStacks || 0) + 1);
+      }
+      // CIEŃ Gold: every 10th hit stuns for 2s
+      if (inC && Factions.tier('CIEN') >= 3) {
+        tower.hitCount = (tower.hitCount || 0) + 1;
+        if (tower.hitCount % 10 === 0) e.stunTime = 2;
+      }
+    }
+
     e.takeDamage(dmg, dmgType);
+
     if (e.dead) {
       Game.gold += e.reward;
       Game.addKill(e);
       Audio.play('goblinDeath');
       UI.showFloatingText('+' + e.reward + 'g', e.x, e.y);
+
+      // BOGACTWO Bronze: +5g for killing non-goblin enemies
+      if (tower && e.type !== 'goblin' && Factions.tier('BOGACTWO') >= 1) {
+        const inB = (Factions.TOWER_FACTIONS[tower.typeId] || []).includes('BOGACTWO');
+        if (inB) { Game.gold += 5; UI.showFloatingText('+5g', e.x, e.y - 12); }
+      }
+
+      // DESTRUKCJA Gold: kill causes chain explosion (50% DMG, radius 1 tile)
+      if (tower && Factions.tier('DESTRUKCJA') >= 3) {
+        const inD = (Factions.TOWER_FACTIONS[tower.typeId] || []).includes('DESTRUKCJA');
+        if (inD) {
+          for (const other of Enemies.list()) {
+            if (other === e || other.dead || other.reached) continue;
+            const dx = other.x - e.x, dy = other.y - e.y;
+            if (Math.sqrt(dx*dx + dy*dy) <= C.T) other.takeDamage(dmg * 0.5, 'splash');
+          }
+        }
+      }
+
+      // MECHANIKA Gold: after kill, reset cooldown for this tower
+      if (tower && Factions.tier('MECHANIKA') >= 3) {
+        const inM = (Factions.TOWER_FACTIONS[tower.typeId] || []).includes('MECHANIKA');
+        if (inM) tower.lastShot = 0;
+      }
+
+      // ŻYWIOŁ Silver: burning enemy death explosion (30 DMG, radius 1.5 tiles)
+      if (e.burning && e.burning.time > 0 && Factions.tier('ZYWIOL') >= 2) {
+        for (const other of Enemies.list()) {
+          if (other === e || other.dead || other.reached) continue;
+          const dx = other.x - e.x, dy = other.y - e.y;
+          if (Math.sqrt(dx*dx + dy*dy) <= 1.5 * C.T) other.takeDamage(30, 'splash');
+        }
+      }
     }
   }
 
   function _applyDamage(p) {
     if (p.splash > 0) {
-      const splashPx = p.splash * C.T;
+      const splashBonus = p.sourceTower ? (p.sourceTower.splashBonus || 0) : 0;
+      const splashPx = p.splash * (1 + splashBonus) * C.T;
       const cx = p.targetRef.x, cy = p.targetRef.y;
       for (const e of Enemies.list()) {
         if (e.dead || e.reached) continue;
         const dx = e.x - cx, dy = e.y - cy;
         if (Math.sqrt(dx*dx + dy*dy) <= splashPx) {
           _hitEnemy(e, p.dmg, p.dmgType, p.sourceTower);
+          // DESTRUKCJA Silver: splash hits apply slow 30% for 2s
+          if (p.sourceTower && Factions.tier('DESTRUKCJA') >= 2) {
+            const inD = (Factions.TOWER_FACTIONS[p.sourceTower.typeId] || []).includes('DESTRUKCJA');
+            if (inD && e.slowed.mult > 0.7) e.slowed = { mult: 0.7, time: 2 };
+          }
         }
       }
     } else {

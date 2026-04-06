@@ -270,6 +270,17 @@ const Factions = (() => {
     return active[factionId] ? active[factionId].tier >= tier : false;
   }
 
-  return { DEFS, TOWER_FACTIONS, TOWER_STATS, getActiveTiers, getTowerFactions, hasTier };
+  // ─── Caching layer ───────────────────────────────────────────────────────────
+  let _tiers = {};
+
+  function recalc(typeIds) {
+    _tiers = getActiveTiers(typeIds);
+  }
+
+  function tier(fid) {
+    return _tiers[fid] ? _tiers[fid].tier : 0;
+  }
+
+  return { DEFS, TOWER_FACTIONS, TOWER_STATS, getActiveTiers, getTowerFactions, hasTier, recalc, tier };
 
 })();
